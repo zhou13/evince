@@ -176,6 +176,11 @@ gpdf_tool_control_set_button_image (GPdfToolControl *control)
         gtk_widget_hide (GTK_WIDGET (priv->drag_tool_image));
         gtk_widget_show (GTK_WIDGET (priv->select_tool_image));
         break;
+
+      case GPDF_NB_TOOLS:
+      default:
+	g_warning ("Inconsistency: Invalid tool number");
+	break;
     }
 }
 
