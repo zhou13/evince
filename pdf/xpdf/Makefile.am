@@ -125,6 +125,8 @@ libgpdf_a_SOURCES =			\
 	GnomeVFSStream.h		\
 	GPOutputDev.cc			\
 	GPOutputDev.h			\
+	Thumb.cc			\
+	Thumb.h				\
 	gpdf-control.cc			\
 	gpdf-control.h			\
 	gpdf-g-switch.h			\
@@ -143,6 +145,10 @@ libgpdf_a_SOURCES =			\
 	gpdf-view.h			\
 	gpdf-bookmarks-view.cc		\
 	gpdf-bookmarks-view.h		\
+	gpdf-thumbnails-view.cc		\
+	gpdf-thumbnails-view.h		\
+	gpdf-annots-view.cc		\
+	gpdf-annots-view.h		\
 	eel-gconf-extensions.c		\
 	eel-gconf-extensions.h		\
 	prefs-strings.h			\
@@ -280,7 +286,25 @@ stock_DATA = 				\
 	stock_book-closed.png		\
 	stock_book-opened-mark.png	\
 	stock_book-opened.png		\
-	stock_bookmarks.png
+	stock_bookmarks.png		\
+	stock-annot-circle.png		\
+	stock-annot-fileattachment.png	\
+	stock-annot-freetext.png	\
+	stock-annot-highlight.png	\
+	stock-annot-ink.png		\
+	stock-annot-line.png		\
+	stock-annot-link.png		\
+	stock-annot-movie.png		\
+	stock-annot-popup.png		\
+	stock-annot-sound.png		\
+	stock-annot-square.png		\
+	stock-annot-stamp.png		\
+	stock-annot-strikeout.png	\
+	stock-annot-text.png		\
+	stock-annot-trapnet.png		\
+	stock-annot-underline.png	\
+	stock-annot-widget.png		\
+	stock-annot-unknown.png
 
 gladedir = $(datadir)/gpdf/glade
 glade_DATA = 				\
