@@ -304,7 +304,8 @@ stock_DATA = 				\
 	stock-annot-trapnet.png		\
 	stock-annot-underline.png	\
 	stock-annot-widget.png		\
-	stock-annot-unknown.png
+	stock-annot-unknown.png		\
+	empty-thumb.png
 
 gladedir = $(datadir)/gpdf/glade
 glade_DATA = 				\
