@@ -141,6 +141,13 @@ libgpdf_a_SOURCES =			\
 	gpdf-util.h			\
 	gpdf-view.cc			\
 	gpdf-view.h			\
+	gpdf-bookmarks-view.cc		\
+	gpdf-bookmarks-view.h		\
+	eel-gconf-extensions.c		\
+	eel-gconf-extensions.h		\
+	prefs-strings.h			\
+	gpdf-sidebar.c			\
+	gpdf-sidebar.h			\
 	gtkgesture.c			\
 	gtkgesture.h			\
 	page-control.c			\
@@ -267,7 +274,13 @@ dist-hook:
 	done
 
 stockdir = $(datadir)/pixmaps/gpdf
-stock_DATA = fitwidth.png
+stock_DATA = 				\
+	fitwidth.png			\
+	stock_book-closed-mark.png	\
+	stock_book-closed.png		\
+	stock_book-opened-mark.png	\
+	stock_book-opened.png		\
+	stock_bookmarks.png
 
 gladedir = $(datadir)/gpdf/glade
 glade_DATA = 				\
