@@ -37,7 +37,7 @@ class GfxColor;
 class ThumbColorMap {
 
       public:
-        ThumbColorMap(int bitsA, Object *strA, GfxColorSpace *csA);
+        ThumbColorMap(int bitsA, Object *obj, GfxColorSpace *csA);
         ~ThumbColorMap();
         
         GBool isOk() {return ok; };
@@ -50,7 +50,9 @@ class ThumbColorMap {
         void getGray(Guchar *x, double *gray);
         void getRGB(Guchar *x, GfxRGB *rgb);
         void getCMYK(Guchar *x, GfxCMYK *cmyk);
-        void getColor(Guchar *x, GfxColor *color);
+        //void getColor(Guchar *x, GfxColor *color);
+
+	static ThumbColorMap *lookupColorMap(XRef *xref, int bitsA, Object *obj, GfxColorSpace *csA); 
 
       private:
         GBool ok; 
@@ -64,8 +66,14 @@ class ThumbColorMap {
                 GfxRGB *rgb;
                 GfxCMYK *cmyk;
                 GfxColor *colors; 
-        }; 
+        };
 };
+
+/*
+ * ThumbColorMaps
+ */
+
+/* FIXME: Should have a class to avoid reading same colormap for every thumb */
 
 /*
  * Thumb
@@ -84,6 +92,8 @@ class Thumb {
 	int getLength(void) {return length; };
 
 	Stream *getStream() {return str; };
+
+	unsigned char *getPixbufData();
 
       private:
         XRef *xref;

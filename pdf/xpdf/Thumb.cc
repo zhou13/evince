@@ -21,16 +21,22 @@
  */
 
 #include <aconf.h>
+#include <string.h>
 
 #ifdef USE_GCC_PRAGMAS
 #pragma implementation
 #endif
 
+#include <gpdf-g-switch.h>
+#  include <glib.h>
+#include <gpdf-g-switch.h>
 #include "gmem.h"
 #include "Object.h"
 #include "Gfx.h"
 #include "GfxState.h"
 #include "Thumb.h"
+
+static GHashTable *cmhash = NULL;
 
 /*
  * ThumbColorMap
@@ -79,43 +85,6 @@ ThumbColorMap::ThumbColorMap(int bitsA,
                 }
 
                 str = str->addFilters(obj);
-#if 0
-                for (n = 0; n < obj1.arrayGetLength (); n++) {
-                        if (obj1.arrayGet (n, &obj2)->isName("ASCII85Decode")) {
-                                str = new ASCII85Stream(str); 
-                        }
-                        else if (obj1.arrayGet (n, &obj2)->isName("ASCIIHexDecode")) {
-                                str = new ASCIIHexStream(str); 
-                        }
-                        else if (obj1.arrayGet (n, &obj2)->isName("LZWDecode")) {
-                                /* FIXME: Init other params by reading them */
-                                str = new LZWStream(str, pred, cols, colors, bits, early); 
-                        }
-                        else if (obj1.arrayGet (n, &obj2)->isName("RunLengthDecode")) {
-                                str = new RunLengthStream(str); 
-                        }
-                        else if (obj1.arrayGet (n, &obj2)->isName("CCITTFaxDecode")) {
-                                /* FIXME: Init other params by reading them */
-                                str = new CCITTFaxStream(str, encoding,
-                                                         eol, byteAlign,
-                                                         cols, rows,
-                                                         eob, black); 
-                        }
-                        else if (obj1.arrayGet (n, &obj2)->isName("DCTDecode")) {
-                                str = new DCTStream(str); 
-                        }
-                        else if (obj1.arrayGet (n, &obj2)->isName("FlateDecode")) {
-                                /* FIXME: Init other params by reading them */
-                                str = new FlateStream(str, pred, cols, colors, bits); 
-                        }
-                        else  {
-                                printf("Error: Unknown Decoding filter %s", obj1.getName());
-                                break; 
-                        }
-                        obj2.free (); 
-                }
-                obj1.free();
-#endif
 
 		streamDict->lookup ("Length", &obj1);
 		if (obj1.isNull ())
@@ -140,38 +109,38 @@ ThumbColorMap::ThumbColorMap(int bitsA,
                         str->reset(); 
                         if (iCS->getBase ()->getMode () == csDeviceGray) {
                                 gray = (double *)gmalloc(sizeof(double) * (iCS->getIndexHigh () + 1));
-                                for (n = 0; n < iCS->getIndexHigh (); n++) {
+                                for (n = 0; n <= iCS->getIndexHigh (); n++) {
                                         double comp = (double)str->getChar(); 
-                                        printf ("Gray pixel [%03d] = %02x\n", n, (int)comp); 
-                                        gray[n] = comp / 255.0; 
+                                        //printf ("Gray pixel [%03d] = %02x\n", n, (int)comp); 
+                                        gray[n] = comp / (double)iCS->getIndexHigh (); 
                                 }
                         }
                         else if (iCS->getBase ()->getMode () == csDeviceRGB) {
                                 rgb = (GfxRGB *)gmalloc(sizeof(GfxRGB) * (iCS->getIndexHigh () + 1));
-                                for (n = 0; n < iCS->getIndexHigh (); n++) {
+                                for (n = 0; n <= iCS->getIndexHigh (); n++) {
                                         double comp_r = (double)str->getChar(); 
                                         double comp_g = (double)str->getChar(); 
                                         double comp_b = (double)str->getChar(); 
-                                        printf ("RGB pixel [%03d] = (%02x,%02x,%02x)\n",
-                                                n, (int)comp_r, (int)comp_g, (int)comp_b); 
-                                        rgb[n].r = comp_r / 255.0; 
-                                        rgb[n].g = comp_g / 255.0; 
-                                        rgb[n].b = comp_b / 255.0; 
+//                                        printf ("RGB pixel [0x%02x] = (%02x,%02x,%02x)\n",
+//                                                n, (int)comp_r, (int)comp_g, (int)comp_b); 
+                                        rgb[n].r = comp_r / (double)iCS->getIndexHigh (); 
+                                        rgb[n].g = comp_g / (double)iCS->getIndexHigh (); 
+                                        rgb[n].b = comp_b / (double)iCS->getIndexHigh (); 
                                 }
                         }
                         else if (iCS->getBase ()->getMode () == csDeviceCMYK) {
                                 cmyk = (GfxCMYK *)gmalloc(sizeof(GfxCMYK) * (iCS->getIndexHigh () + 1));
-                                for (n = 0; n < iCS->getIndexHigh (); n++) {
+                                for (n = 0; n <= iCS->getIndexHigh (); n++) {
                                         double comp_c = (double)str->getChar(); 
                                         double comp_m = (double)str->getChar(); 
                                         double comp_y = (double)str->getChar(); 
                                         double comp_k = (double)str->getChar(); 
-                                        printf ("CMYK pixel [%03d] = (%02x,%02x,%02x,%02x)\n",
-                                                n, (int)comp_c, (int)comp_m, (int)comp_y, (int)comp_k); 
-                                        cmyk[n].c = comp_c / 255.0; 
-                                        cmyk[n].m = comp_m / 255.0; 
-                                        cmyk[n].y = comp_y / 255.0; 
-                                        cmyk[n].k = comp_k / 255.0; 
+                                        //printf ("CMYK pixel [%03d] = (%02x,%02x,%02x,%02x)\n",
+                                        //        n, (int)comp_c, (int)comp_m, (int)comp_y, (int)comp_k); 
+                                        cmyk[n].c = comp_c / (double)iCS->getIndexHigh (); 
+                                        cmyk[n].m = comp_m / (double)iCS->getIndexHigh (); 
+                                        cmyk[n].y = comp_y / (double)iCS->getIndexHigh (); 
+                                        cmyk[n].k = comp_k / (double)iCS->getIndexHigh (); 
                                 }
                         }
                 }
@@ -183,6 +152,56 @@ ThumbColorMap::ThumbColorMap(int bitsA,
                 ok = gTrue;
         }
         while (0); 
+}
+
+ThumbColorMap *
+ThumbColorMap::lookupColorMap(XRef *xref, int bits, Object *obj, GfxColorSpace *cs)
+{
+	Object obj1; 
+	ThumbColorMap *cm; 
+	int key;
+	
+	if (!cmhash)
+		cmhash = g_hash_table_new(NULL, g_int_equal); 
+
+	//key = g_strdup_printf ("%d %d R", obj->getRefNum (), obj->getRefGen ());
+	key = obj->getRefNum ();
+
+	if (!(cm = (ThumbColorMap *)g_hash_table_lookup (cmhash, &key))) {
+		cm = new ThumbColorMap(bits, obj->fetch(xref, &obj1), cs);
+		obj1.free(); 
+		g_hash_table_insert(cmhash, &key, cm); 
+		g_message ("lookupColorMap: storing cm = 0x%lx for key %d",
+			   (unsigned long)cm, key); 
+	}
+	else
+	    g_message ("lookupColorMap: Found color map cm = 0x%lx for key %d",
+		       (unsigned long)cm, key); 
+
+	return cm; 
+}
+
+void
+ThumbColorMap::getGray(Guchar *x, double *outgray)
+{
+	*outgray = gray[*x];
+}
+
+void
+ThumbColorMap::getRGB(Guchar *x, GfxRGB *outrgb)
+{
+	outrgb->r = rgb[*x].r;
+	outrgb->g = rgb[*x].g;
+	outrgb->b = rgb[*x].b;
+}
+
+void
+ThumbColorMap::getCMYK(Guchar *x, GfxCMYK *outcmyk)
+{
+	outcmyk->c = cmyk[*x].c;
+	outcmyk->m = cmyk[*x].m;
+	outcmyk->y = cmyk[*x].y;
+	outcmyk->k = cmyk[*x].k;
 }
 
 ThumbColorMap::~ThumbColorMap()
@@ -201,6 +220,8 @@ Thumb::Thumb(XRef *xrefA, Object *obj) :
 {
 	Object obj1, obj2;
 	Dict *dict;
+	unsigned int dsize;
+	int row, col, comp;
 
 	do {
 		/* Get stream dict */
@@ -268,24 +289,67 @@ Thumb::Thumb(XRef *xrefA, Object *obj) :
 			obj1.free ();
 			break;
 		}
+		if (gfxCS->getMode () == csIndexed)			
+			thumbCM = ThumbColorMap::lookupColorMap (xref, bits, obj1.arrayGetNF(3, &obj2), gfxCS);
+		else if (gfxCS->getMode () == csSeparation)
+			printf ("Not yet implemented\n");
+		  
 		
 		dict->lookup ("Length", &obj1);
 		if (!obj1.isInt ()) {
 			printf ("Error: Invalid Length Object %s\n",
 				obj1.getTypeName ());
 			obj1.free ();
-			break;			
+			break;
 		}
 		length = obj1.getInt ();
 		obj1.free ();
 
-                thumbCM = new ThumbColorMap (bits, obj, gfxCS);
+		str->addFilters(obj);
 	}
 	while (0);	
 }
 
+unsigned char *
+Thumb::getPixbufData()
+{
+	ImageStream *imgstr;
+	unsigned char *pixbufdata;
+	unsigned int pixbufdatasize;
+	int row, col, i;
+	unsigned char *p;
+
+	/* RGB Pixbuf data */
+	pixbufdatasize = width * height * 3;
+	pixbufdata =(unsigned char *)g_malloc(pixbufdatasize);
+	p = pixbufdata;
+
+	imgstr = new ImageStream(str, width, thumbCM->getNumPixelComps(), thumbCM->getBits());
+	imgstr->reset();
+	for (row = 0; row < height; ++row) {
+	    for (col = 0; col < width; ++col) {
+		Guchar pix[gfxColorMaxComps];
+		GfxRGB rgb;
+
+		imgstr->getPixel(pix);
+		thumbCM->getRGB(pix, &rgb);
+
+//		g_message("ImgData[%03d,%03d] = 0x%02x%02x%02x (0x%02x)", row, col,
+//			  (guchar)(rgb.r * 255.99999), (guchar)(rgb.g * 255.99999), (guchar)(rgb.b * 255.99999),
+//			  pix[0]);
+
+		*p++ = (guchar)(rgb.r * 255.99999);
+		*p++ = (guchar)(rgb.g * 255.99999);
+		*p++ = (guchar)(rgb.b * 255.99999);
+	    }
+	}
+	delete imgstr;
+
+	return pixbufdata;
+}
+
 Thumb::~Thumb() {
         delete thumbCM;
-        delete str; 
+        delete str;
 }
 
