@@ -310,7 +310,8 @@ stock_DATA = 				\
 gladedir = $(datadir)/gpdf/glade
 glade_DATA = 				\
 	gpdf-properties-dialog.glade	\
-	gpdf-findtext-dialog.glade
+	gpdf-findtext-dialog.glade	\
+	gpdf-printing-dialog.glade
 
 server_in_files = GNOME_PDF.server.in.in
 serverdir = $(libdir)/bonobo/servers
