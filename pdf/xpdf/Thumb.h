@@ -26,29 +26,72 @@
 #include <aconf.h>
 
 class XRef;
-class Gfx;
+class GfxColorSpace;
+class GfxRGB;
+class GfxCMYK;
+class GfxColor;
+
+/*
+ * ThumbColorMap
+ */
+class ThumbColorMap {
+
+      public:
+        ThumbColorMap(int bitsA, Object *strA, GfxColorSpace *csA);
+        ~ThumbColorMap();
+        
+        GBool isOk() {return ok; };
+        
+        GfxColorSpace *getColorSpace() { return cs; }; 
+        
+        int getNumPixelComps() { return nComps; }; 
+        int getBits() { return bits; }; 
+        
+        void getGray(Guchar *x, double *gray);
+        void getRGB(Guchar *x, GfxRGB *rgb);
+        void getCMYK(Guchar *x, GfxCMYK *cmyk);
+        void getColor(Guchar *x, GfxColor *color);
+
+      private:
+        GBool ok; 
+        int bits;
+        Stream *str;
+        GfxColorSpace *cs;
+        int nComps;
+        int length;
+        union {
+                double *gray;
+                GfxRGB *rgb;
+                GfxCMYK *cmyk;
+                GfxColor *colors; 
+        }; 
+};
 
 /*
  * Thumb
  */
 
 class Thumb {
+
       public:
         Thumb(XRef *xrefA, Object *obj);
         ~Thumb();
 
-        Object *getWidth(Object *obj) {return width.copy(obj); };
-        Object *getHeight(Object *obj) {return height.copy(obj); };
-        Object *getColorSpace(Object *obj) {return colorspace.copy(obj); };
-        Object *getBitsPerComponent(Object *obj) {return bitspercomponent.copy(obj); };
+        int getWidth(void) {return width; };
+        int getHeight(void) {return height; };
+        GfxColorSpace *getColorSpace(void) {return gfxCS; };
+        int getBitsPerComponent(void) {return bits; };
+	int getLength(void) {return length; };
 
-        Dict *getDict() {return dict; };
+	Stream *getStream() {return str; };
 
       private:
-
         XRef *xref;
-        Dict *dict;
-        Object width, height, colorspace, bitspercomponent;
+	Stream *str;
+	GfxColorSpace *gfxCS;
+        ThumbColorMap *thumbCM; 
+        int width, height, bits;
+	int length;
 };
 
 #endif
