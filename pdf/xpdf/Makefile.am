@@ -248,6 +248,7 @@ stock_DATA = 				\
 
 gladedir = $(datadir)/gpdf/glade
 glade_DATA =					\
+	gpdf-findtext-dialog.glade		\
 	gpdf-print-progress-dialog.glade	\
 	gpdf-properties-dialog.glade
 
