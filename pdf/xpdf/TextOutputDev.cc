@@ -1651,7 +1651,14 @@ GBool TextPage::findText(Unicode *s, int len,
 
   // scan all text on the page
   for (line = lines; line; line = line->pageNext) {
-
+#if 0      
+    fprintf(stderr,
+            "TextPage::findText: line (%d) = '%s'\n",
+            line->len, line->text); 
+    fprintf(stderr,
+            "TextPage::findText: line BBox [%03.2f, %03.2f]-[%03.2f, %03.2f]\n",
+            line->xMin, line->yMin, line->xMax, line->yMax); 
+#endif
     // check: above top limit?
     if (!top && (line->yMax < *yMin ||
 		 (line->yMin < *yMin && line->xMax <= *xMin))) {
@@ -1671,7 +1678,11 @@ GBool TextPage::findText(Unicode *s, int len,
       x0 = (i == 0) ? line->xMin : line->xRight[i-1];
       x1 = line->xRight[i];
       x = 0.5 * (x0 + x1);
-
+#if 0
+      fprintf(stderr,
+              "TextPage::findText: Char '%c' #%d in line at [%03.2f, %03.2f] mean=%03.2f\n",
+              *p & 0xff, i, x0, x1, x); 
+#endif
       // check: above top limit?
       if (!top && line->yMin < *yMin) {
 	if (x < *xMin) {
@@ -1712,6 +1723,11 @@ GBool TextPage::findText(Unicode *s, int len,
 	*xMax = line->xRight[i + len - 1];
 	*yMin = line->yMin;
 	*yMax = line->yMax;
+#if 0
+        fprintf(stderr,
+                "TextPage::findText: found at [%03.2f, %03.2f] [%03.2f, %03.2f]\n",
+                *xMin, *yMin, *xMax, *yMax);
+#endif
 	return gTrue;
       }
     }
@@ -2067,7 +2083,7 @@ static void outputToFile(void *stream, char *text, int len) {
   fwrite(text, 1, len, (FILE *)stream);
 }
 
-TextOutputDev::TextOutputDev(char *fileName, GBool physLayoutA,
+TextOutputDev::TextOutputDev(const char *fileName, GBool physLayoutA,
 			     GBool rawOrderA, GBool append) {
   text = NULL;
   physLayout = physLayoutA;
