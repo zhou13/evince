@@ -313,9 +313,11 @@ glade_DATA = 				\
 
 server_in_files = GNOME_PDF.server.in.in
 serverdir = $(libdir)/bonobo/servers
-server_DATA = $(server_in_files:.server.in.in=.server)
-$(server_in_files:.server.in.in=.server.in): $(server_in_files)
+server_DATA = $(server_in_files:%.server.in.in=%.server)
+
+$(server_in_files:%.server.in.in=%.server.in): $(server_in_files)
 	sed -e "s|\@LIBEXECDIR\@|$(libexecdir)|" $< > $@
+
 @INTLTOOL_SERVER_RULE@
 
 uidir = $(datadir)/gnome-2.0/ui
