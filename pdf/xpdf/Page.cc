@@ -199,6 +199,15 @@ Page::Page(XRef *xrefA, int numA, Dict *pageDict, PageAttrs *attrsA) {
     goto err1;
   }
 
+  // thumb
+  pageDict->lookupNF("Thumb", &thumb);
+  // if (!(thumb.isStream() || thumb.isNull())) {
+  // error(-1, "Page thumb object (page %d) is wrong type (%s)",
+  // num, thumb.getTypeName());
+  // thumb.free();
+  // thumb.initNull(); 
+  // }
+
   return;
 
  err2:

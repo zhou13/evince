@@ -140,6 +140,9 @@ public:
   // Get contents.
   Object *getContents(Object *obj) { return contents.fetch(xref, obj); }
 
+  // Get thumb.
+  Object *getThumb(Object *obj) { return thumb.fetch(xref, obj); }
+
   // Display a page.
   void display(OutputDev *out, double dpi, int rotate,
 	       Links *links, Catalog *catalog,
@@ -160,6 +163,7 @@ private:
   PageAttrs *attrs;		// page attributes
   Object annots;		// annotations array
   Object contents;		// page contents
+  Object thumb;			// page thumbnail
   GBool ok;			// true if page is valid
 };
 
