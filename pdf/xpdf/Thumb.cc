@@ -159,24 +159,20 @@ ThumbColorMap::lookupColorMap(XRef *xref, int bits, Object *obj, GfxColorSpace *
 {
 	Object obj1; 
 	ThumbColorMap *cm; 
-	int key;
+	gchar *key;
 	
 	if (!cmhash)
 		cmhash = g_hash_table_new(NULL, g_int_equal); 
 
-	//key = g_strdup_printf ("%d %d R", obj->getRefNum (), obj->getRefGen ());
-	key = obj->getRefNum ();
+	key = g_strdup_printf ("%d %d R", obj->getRefNum (), obj->getRefGen ());
 
 	if (!(cm = (ThumbColorMap *)g_hash_table_lookup (cmhash, &key))) {
 		cm = new ThumbColorMap(bits, obj->fetch(xref, &obj1), cs);
 		obj1.free(); 
 		g_hash_table_insert(cmhash, &key, cm); 
-		g_message ("lookupColorMap: storing cm = 0x%lx for key %d",
-			   (unsigned long)cm, key); 
 	}
-	else
-	    g_message ("lookupColorMap: Found color map cm = 0x%lx for key %d",
-		       (unsigned long)cm, key); 
+
+	g_free (key); 
 
 	return cm; 
 }
@@ -333,10 +329,6 @@ Thumb::getPixbufData()
 
 		imgstr->getPixel(pix);
 		thumbCM->getRGB(pix, &rgb);
-
-//		g_message("ImgData[%03d,%03d] = 0x%02x%02x%02x (0x%02x)", row, col,
-//			  (guchar)(rgb.r * 255.99999), (guchar)(rgb.g * 255.99999), (guchar)(rgb.b * 255.99999),
-//			  pix[0]);
 
 		*p++ = (guchar)(rgb.r * 255.99999);
 		*p++ = (guchar)(rgb.g * 255.99999);
