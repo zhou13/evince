@@ -199,15 +199,23 @@ Page::Page(XRef *xrefA, int numA, Dict *pageDict, PageAttrs *attrsA) {
     goto err1;
   }
 
+#define PRINT_IS(isType) printf("page thumb " #isType ": %s\n", thumb.isType() ? "Yes" : "No"); 
+  
   // thumb
   pageDict->lookupNF("Thumb", &thumb);
-  // if (!(thumb.isStream() || thumb.isNull())) {
-  // error(-1, "Page thumb object (page %d) is wrong type (%s)",
-  // num, thumb.getTypeName());
-  // thumb.free();
-  // thumb.initNull(); 
-  // }
-
+  printf("Thumb obj dump: "); 
+  thumb.print(); 
+  printf("\n"); 
+  PRINT_IS(isRef); 
+  PRINT_IS(isStream); 
+  PRINT_IS(isDict); 
+  if (!(thumb.isStream() || thumb.isNull() || thumb.isRef())) {
+      error(-1, "Page thumb object (page %d) is wrong type (%s)",
+            num, thumb.getTypeName());
+      thumb.initNull(); 
+  }
+  printf("Thumb num = %d   gen = %d\n", thumb.getRefNum(), thumb.getRefGen());
+  
   return;
 
  err2:
