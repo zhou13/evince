@@ -302,7 +302,7 @@ public:
   // <physLayoutA> is true, the original physical layout of the text
   // is maintained.  If <rawOrder> is true, the text is kept in
   // content stream order.
-  TextOutputDev(char *fileName, GBool physLayoutA,
+  TextOutputDev(const char *fileName, GBool physLayoutA,
 		GBool rawOrderA, GBool append);
 
   // Create a TextOutputDev which will write to a generic stream.  If
