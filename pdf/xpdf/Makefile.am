@@ -74,6 +74,8 @@ libxpdf_a_SOURCES =		\
 	Outline.h		\
 	OutputDev.cc 		\
 	OutputDev.h		\
+	TextOutputDev.cc	\
+	TextOutputDev.h		\
 	Page.cc 		\
 	Page.h			\
 	Parser.cc 		\
@@ -156,6 +158,8 @@ libgpdf_a_SOURCES =			\
 	gtkgesture.h			\
 	page-control.c			\
 	page-control.h			\
+	tool-control.c			\
+	tool-control.h			\
 	pdf-info-dict-util.cc		\
 	pdf-info-dict-util.h		\
 	pdf-properties-display.c	\
@@ -236,6 +240,10 @@ stock_DATA = 				\
 	stock_book-opened-mark.png	\
 	stock_book-opened.png		\
 	stock_bookmarks.png		\
+	hand-open.png			\
+	tool-select.png			\
+	cursor-hand-open.png		\
+	cursor-hand-closed.png		\
 	$(STOCK_ANNOTS_ICONS)
 
 gladedir = $(datadir)/gpdf/glade
