@@ -1,4 +1,4 @@
-#SUBDIRS = . tests
+SUBDIRS = . tests
 
 INCLUDES =							\
 	-I$(top_srcdir)						\
@@ -81,6 +81,8 @@ libxpdf_a_SOURCES =		\
 	Outline.h		\
 	OutputDev.cc 		\
 	OutputDev.h		\
+	TextOutputDev.cc	\
+	TextOutputDev.h		\
 	Page.cc 		\
 	Page.h			\
 	Parser.cc 		\
@@ -129,6 +131,7 @@ libgpdf_a_SOURCES =			\
 	Thumb.h				\
 	gpdf-control.cc			\
 	gpdf-control.h			\
+	gpdf-control-private.h		\
 	gpdf-g-switch.h			\
 	gpdf-link-canvas-item.cc	\
 	gpdf-link-canvas-item.h		\
