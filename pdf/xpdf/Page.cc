@@ -225,16 +225,21 @@ Page::~Page() {
 void Page::display(OutputDev *out, double dpi, int rotate,
 		   Links *links, Catalog *catalog,
 		   GBool (*abortCheckCbk)(void *data),
-		   void *abortCheckCbkData) {
+		   void *abortCheckCbkData,
+                   GBool (*annotDisplayDecideCbk)(Annot *annot, void *user_data),
+                   void *annotDisplayDecideCbkData) {
   displaySlice(out, dpi, rotate, -1, -1, -1, -1, links, catalog,
-	       abortCheckCbk, abortCheckCbkData);
+	       abortCheckCbk, abortCheckCbkData,
+               annotDisplayDecideCbk, annotDisplayDecideCbkData);
 }
 
 void Page::displaySlice(OutputDev *out, double dpi, int rotate,
 			int sliceX, int sliceY, int sliceW, int sliceH,
 			Links *links, Catalog *catalog,
 			GBool (*abortCheckCbk)(void *data),
-			void *abortCheckCbkData) {
+			void *abortCheckCbkData,
+                        GBool (*annotDisplayDecideCbk)(Annot *annot, void *user_data),
+                        void *annotDisplayDecideCbkData) {
 #ifndef PDF_PARSER_ONLY
   PDFRectangle *mediaBox, *cropBox;
   PDFRectangle box;
@@ -338,7 +343,11 @@ void Page::displaySlice(OutputDev *out, double dpi, int rotate,
       printf("***** Annotations\n");
     }
     for (i = 0; i < annotList->getNumAnnots(); ++i) {
-      annotList->getAnnot(i)->draw(gfx);
+        Annot *annot = annotList->getAnnot(i);
+        if ((annotDisplayDecideCbk && (*annotDisplayDecideCbk)(annot, annotDisplayDecideCbkData)) ||
+            !annotDisplayDecideCbk)
+          annot->draw(gfx); 
+            
     }
     out->dump();
   }
