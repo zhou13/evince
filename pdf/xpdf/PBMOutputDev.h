@@ -2,7 +2,7 @@
 //
 // PBMOutputDev.h
 //
-// Copyright 1998 Derek B. Noonburg
+// Copyright 1998-2002 Glyph & Cog, LLC
 //
 //========================================================================
 
@@ -22,10 +22,16 @@
 class PBMOutputDev: public XOutputDev {
 public:
 
-  static PBMOutputDev *makePBMOutputDev(char *displayName,
-					char *fileRoot1);
+  // NB: Users must use makePBMOutputDev and killPBMOutputDev rather
+  // than the constructor and destructor.  (This is due to some
+  // constraints in the underlying XOutputDev object.)
 
-  ~PBMOutputDev();
+  static PBMOutputDev *makePBMOutputDev(char *displayName,
+					char *fileRootA);
+
+  static void killPBMOutputDev(PBMOutputDev *out);
+
+  virtual ~PBMOutputDev();
 
   //----- initialization and control
 
@@ -37,9 +43,9 @@ public:
 
 private:
 
-  PBMOutputDev(Display *display1, int screen1,
-	       Pixmap pixmap1, Window dummyWin1,
-	       int invert1, char *fileRoot1);
+  PBMOutputDev(Display *displayA, int screenA,
+	       Pixmap pixmapA, Window dummyWinA,
+	       int invertA, char *fileRootA);
 
   char *fileRoot;
   char *fileName;

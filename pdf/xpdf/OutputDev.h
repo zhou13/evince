@@ -2,7 +2,7 @@
 //
 // OutputDev.h
 //
-// Copyright 1996 Derek B. Noonburg
+// Copyright 1996-2002 Glyph & Cog, LLC
 //
 //========================================================================
 
@@ -14,12 +14,15 @@
 #endif
 
 #include "gtypes.h"
+#include "CharTypes.h"
 
 class GString;
 class GfxState;
 class GfxColorSpace;
 class GfxImageColorMap;
 class Stream;
+class Link;
+class Catalog;
 
 //------------------------------------------------------------------------
 // OutputDev
@@ -43,10 +46,17 @@ public:
   // Does this device use drawChar() or drawString()?
   virtual GBool useDrawChar() = 0;
 
+  // Does this device use beginType3Char/endType3Char?  Otherwise,
+  // text in Type 3 fonts will be drawn with drawChar/drawString.
+  virtual GBool interpretType3Chars() = 0;
+
+  // Does this device need non-text content?
+  virtual GBool needNonText() { return gTrue; }
+
   //----- initialization and control
 
   // Set default transform matrix.
-  virtual void setDefaultCTM(double *ctm1);
+  virtual void setDefaultCTM(double *ctm);
 
   // Start a page.
   virtual void startPage(int pageNum, GfxState *state) {}
@@ -64,8 +74,7 @@ public:
   virtual void cvtUserToDev(double ux, double uy, int *dx, int *dy);
 
   //----- link borders
-  virtual void drawLinkBorder(double x1, double y1, double x2, double y2,
-			      double w) {}
+  virtual void drawLink(Link *link, Catalog *catalog) {}
 
   //----- save/restore graphics state
   virtual void saveState(GfxState *state) {}
@@ -83,6 +92,8 @@ public:
   virtual void updateLineWidth(GfxState *state) {}
   virtual void updateFillColor(GfxState *state) {}
   virtual void updateStrokeColor(GfxState *state) {}
+  virtual void updateFillOpacity(GfxState *state) {}
+  virtual void updateStrokeOpacity(GfxState *state) {}
 
   //----- update text state
   virtual void updateFont(GfxState *state) {}
@@ -108,24 +119,40 @@ public:
   virtual void beginString(GfxState *state, GString *s) {}
   virtual void endString(GfxState *state) {}
   virtual void drawChar(GfxState *state, double x, double y,
-			double dx, double dy, Guchar c) {}
-  virtual void drawChar16(GfxState *state, double x, double y,
-			  double dx, double dy, int c) {}
+			double dx, double dy,
+			double originX, double originY,
+			CharCode code, Unicode *u, int uLen) {}
   virtual void drawString(GfxState *state, GString *s) {}
-  virtual void drawString16(GfxState *state, GString *s) {}
+  virtual GBool beginType3Char(GfxState *state,
+			       CharCode code, Unicode *u, int uLen);
+  virtual void endType3Char(GfxState *state) {}
 
   //----- image drawing
-  virtual void drawImageMask(GfxState *state, Stream *str,
+  virtual void drawImageMask(GfxState *state, Object *ref, Stream *str,
 			     int width, int height, GBool invert,
 			     GBool inlineImg);
-  virtual void drawImage(GfxState *state, Stream *str, int width,
-			 int height, GfxImageColorMap *colorMap,
-			 GBool inlineImg);
+  virtual void drawImage(GfxState *state, Object *ref, Stream *str,
+			 int width, int height, GfxImageColorMap *colorMap,
+			 int *maskColors, GBool inlineImg);
+
+#if OPI_SUPPORT
+  //----- OPI functions
+  virtual void opiBegin(GfxState *state, Dict *opiDict);
+  virtual void opiEnd(GfxState *state, Dict *opiDict);
+#endif
+
+  //----- Type 3 font operators
+  virtual void type3D0(GfxState *state, double wx, double wy) {}
+  virtual void type3D1(GfxState *state, double wx, double wy,
+		       double llx, double lly, double urx, double ury) {}
+
+  //----- PostScript XObjects
+  virtual void psXObject(Stream *psStream, Stream *level1Stream) {}
 
 private:
 
-  double ctm[6];		// coordinate transform matrix
-  double ictm[6];		// inverse CTM
+  double defCTM[6];		// default coordinate transform matrix
+  double defICTM[6];		// inverse of default CTM
 };
 
 #endif

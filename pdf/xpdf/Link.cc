@@ -2,7 +2,7 @@
 //
 // Link.cc
 //
-// Copyright 1996 Derek B. Noonburg
+// Copyright 1996-2002 Glyph & Cog, LLC
 //
 //========================================================================
 
@@ -10,6 +10,7 @@
 #pragma implementation
 #endif
 
+#include <aconf.h>
 #include <stddef.h>
 #include <string.h>
 #include "gmem.h"
@@ -28,31 +29,27 @@ static GString *getFileSpecName(Object *fileSpecObj);
 // LinkDest
 //------------------------------------------------------------------------
 
-LinkDest::LinkDest(Array *a, GBool pageIsRef1) {
+LinkDest::LinkDest(Array *a) {
   Object obj1, obj2;
 
   // initialize fields
-  pageIsRef = pageIsRef1;
   left = bottom = right = top = zoom = 0;
   ok = gFalse;
 
   // get page
-  if (pageIsRef) {
-    if (!a->getNF(0, &obj1)->isRef()) {
-      error(-1, "Bad annotation destination");
-      goto err2;
-    }
+  a->getNF(0, &obj1);
+  if (obj1.isInt()) {
+    pageNum = obj1.getInt() + 1;
+    pageIsRef = gFalse;
+  } else if (obj1.isRef()) {
     pageRef.num = obj1.getRefNum();
     pageRef.gen = obj1.getRefGen();
-    obj1.free();
+    pageIsRef = gTrue;
   } else {
-    if (!a->get(0, &obj1)->isInt()) {
-      error(-1, "Bad annotation destination");
-      goto err2;
-    }
-    pageNum = obj1.getInt() + 1;
-    obj1.free();
+    error(-1, "Bad annotation destination");
+    goto err2;
   }
+  obj1.free();
 
   // get destination type
   a->get(1, &obj1);
@@ -220,7 +217,7 @@ LinkGoTo::LinkGoTo(Object *destObj) {
 
   // destination dictionary
   } else if (destObj->isArray()) {
-    dest = new LinkDest(destObj->getArray(), gTrue);
+    dest = new LinkDest(destObj->getArray());
     if (!dest->isOk()) {
       delete dest;
       dest = NULL;
@@ -258,7 +255,7 @@ LinkGoToR::LinkGoToR(Object *fileSpecObj, Object *destObj) {
 
   // destination dictionary
   } else if (destObj->isArray()) {
-    dest = new LinkDest(destObj->getArray(), gFalse);
+    dest = new LinkDest(destObj->getArray());
     if (!dest->isOk()) {
       delete dest;
       dest = NULL;
@@ -323,12 +320,39 @@ LinkLaunch::~LinkLaunch() {
 // LinkURI
 //------------------------------------------------------------------------
 
-LinkURI::LinkURI(Object *uriObj) {
+LinkURI::LinkURI(Object *uriObj, GString *baseURI) {
+  GString *uri2;
+  int n;
+  char c;
+
   uri = NULL;
-  if (uriObj->isString())
-    uri = uriObj->getString()->copy();
-  else
+  if (uriObj->isString()) {
+    uri2 = uriObj->getString()->copy();
+    if (baseURI) {
+      n = strcspn(uri2->getCString(), "/:");
+      if (n == uri2->getLength() || uri2->getChar(n) == '/') {
+	uri = baseURI->copy();
+	c = uri->getChar(uri->getLength() - 1);
+	if (c == '/' || c == '?') {
+	  if (uri2->getChar(0) == '/') {
+	    uri2->del(0);
+	  }
+	} else {
+	  if (uri2->getChar(0) != '/') {
+	    uri->append('/');
+	  }
+	}
+	uri->append(uri2);
+	delete uri2;
+      } else {
+	uri = uri2;
+      }
+    } else {
+      uri = uri2;
+    }
+  } else {
     error(-1, "Illegal URI-type link");
+  }
 }
 
 LinkURI::~LinkURI() {
@@ -337,11 +361,28 @@ LinkURI::~LinkURI() {
 }
 
 //------------------------------------------------------------------------
+// LinkNamed
+//------------------------------------------------------------------------
+
+LinkNamed::LinkNamed(Object *nameObj) {
+  name = NULL;
+  if (nameObj->isName()) {
+    name = new GString(nameObj->getName());
+  }
+}
+
+LinkNamed::~LinkNamed() {
+  if (name) {
+    delete name;
+  }
+}
+
+//------------------------------------------------------------------------
 // LinkUnknown
 //------------------------------------------------------------------------
 
-LinkUnknown::LinkUnknown(char *action1) {
-  action = new GString(action1);
+LinkUnknown::LinkUnknown(char *actionA) {
+  action = new GString(actionA);
 }
 
 LinkUnknown::~LinkUnknown() {
@@ -352,7 +393,7 @@ LinkUnknown::~LinkUnknown() {
 // Link
 //------------------------------------------------------------------------
 
-Link::Link(Dict *dict) {
+Link::Link(Dict *dict, GString *baseURI) {
   Object obj1, obj2, obj3, obj4;
   double t;
 
@@ -401,13 +442,16 @@ Link::Link(Dict *dict) {
   }
 
   // get border
-  borderW = 0;
+  borderW = 1;
   if (!dict->lookup("Border", &obj1)->isNull()) {
-    if (obj1.isArray() && obj1.arrayGet(2, &obj2)->isNum())
-      borderW = obj2.getNum();
-    else
-      error(-1, "Bad annotation border");
-    obj2.free();
+    if (obj1.isArray() && obj1.arrayGetLength() >= 3) {
+      if (obj1.arrayGet(2, &obj2)->isNum()) {
+	borderW = obj2.getNum();
+      } else {
+	error(-1, "Bad annotation border");
+      }
+      obj2.free();
+    }
   }
   obj1.free();
 
@@ -442,7 +486,13 @@ Link::Link(Dict *dict) {
       // URI action
       } else if (obj2.isName("URI")) {
 	obj1.dictLookup("URI", &obj3);
-	action = new LinkURI(&obj3);
+	action = new LinkURI(&obj3, baseURI);
+	obj3.free();
+
+      // Named action
+      } else if (obj2.isName("Named")) {
+	obj1.dictLookup("N", &obj3);
+	action = new LinkNamed(&obj3);
 	obj3.free();
 
       // unknown action
@@ -485,7 +535,7 @@ Link::~Link() {
 // Links
 //------------------------------------------------------------------------
 
-Links::Links(Object *annots) {
+Links::Links(Object *annots, GString *baseURI) {
   Link *link;
   Object obj1, obj2;
   int size;
@@ -499,7 +549,7 @@ Links::Links(Object *annots) {
     for (i = 0; i < annots->arrayGetLength(); ++i) {
       if (annots->arrayGet(i, &obj1)->isDict()) {
 	if (obj1.dictLookup("Subtype", &obj2)->isName("Link")) {
-	  link = new Link(obj1.getDict());
+	  link = new Link(obj1.getDict(), baseURI);
 	  if (link->isOk()) {
 	    if (numLinks >= size) {
 	      size += 16;
@@ -528,11 +578,9 @@ Links::~Links() {
 LinkAction *Links::find(double x, double y) {
   int i;
 
-  for (i = 0; i < numLinks; ++i) {
+  for (i = numLinks - 1; i >= 0; --i) {
     if (links[i]->inRect(x, y)) {
-      if (links[i]->getAction())
-	return links[i]->getAction();
-      return NULL;
+      return links[i]->getAction();
     }
   }
   return NULL;
@@ -571,6 +619,7 @@ static GString *getFileSpecName(Object *fileSpecObj) {
       name = obj1.getString()->copy();
     else
       error(-1, "Illegal file spec in link");
+    obj1.free();
 
   // error
   } else {

@@ -2,7 +2,7 @@
 //
 // Link.h
 //
-// Copyright 1996 Derek B. Noonburg
+// Copyright 1996-2002 Glyph & Cog, LLC
 //
 //========================================================================
 
@@ -28,6 +28,7 @@ enum LinkActionKind {
   actionGoToR,			// go to destination in new file
   actionLaunch,			// launch app (or open document)
   actionURI,			// URI
+  actionNamed,			// named action
   actionUnknown			// anything else
 };
 
@@ -62,10 +63,8 @@ enum LinkDestKind {
 class LinkDest {
 public:
 
-  // Build a LinkDest from the array.  If <pageIsRef> is true, the
-  // page is specified by an object reference; otherwise the page is
-  // specified by a (zero-relative) page number.
-  LinkDest(Array *a, GBool pageIsRef1);
+  // Build a LinkDest from the array.
+  LinkDest(Array *a);
 
   // Copy a LinkDest.
   LinkDest *copy() { return new LinkDest(this); }
@@ -200,8 +199,8 @@ private:
 class LinkURI: public LinkAction {
 public:
 
-  // Build a LinkURI given the URI (string).
-  LinkURI(Object *uriObj);
+  // Build a LinkURI given the URI (string) and base URI.
+  LinkURI(Object *uriObj, GString *baseURI);
 
   // Destructor.
   virtual ~LinkURI();
@@ -219,6 +218,28 @@ private:
 };
 
 //------------------------------------------------------------------------
+// LinkNamed
+//------------------------------------------------------------------------
+
+class LinkNamed: public LinkAction {
+public:
+
+  // Build a LinkNamed given the action name.
+  LinkNamed(Object *nameObj);
+
+  virtual ~LinkNamed();
+
+  virtual GBool isOk() { return name != NULL; }
+
+  virtual LinkActionKind getKind() { return actionNamed; }
+  GString *getName() { return name; }
+
+private:
+
+  GString *name;
+};
+
+//------------------------------------------------------------------------
 // LinkUnknown
 //------------------------------------------------------------------------
 
@@ -226,7 +247,7 @@ class LinkUnknown: public LinkAction {
 public:
 
   // Build a LinkUnknown with the specified action type.
-  LinkUnknown(char *action1);
+  LinkUnknown(char *actionA);
 
   // Destructor.
   virtual ~LinkUnknown();
@@ -251,7 +272,7 @@ class Link {
 public:
 
   // Construct a link, given its dictionary.
-  Link(Dict *dict);
+  Link(Dict *dict, GString *baseURI);
 
   // Destructor.
   ~Link();
@@ -288,7 +309,7 @@ class Links {
 public:
 
   // Extract links from array of annotations.
-  Links(Object *annots);
+  Links(Object *annots, GString *baseURI);
 
   // Destructor.
   ~Links();

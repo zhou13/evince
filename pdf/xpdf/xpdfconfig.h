@@ -2,7 +2,7 @@
 //
 // config.h
 //
-// Copyright 1996 Derek B. Noonburg
+// Copyright 1996-2002 Glyph & Cog, LLC
 //
 //========================================================================
 
@@ -10,18 +10,23 @@
 #define CONFIG_H
 
 //------------------------------------------------------------------------
-// general constants
+// version
 //------------------------------------------------------------------------
 
 // xpdf version
-#define xpdfVersion "0.80"
+
+#define xpdfVersion "1.01"
 
 // supported PDF version
-#define pdfVersion "1.2"
-#define pdfVersionNum 1.2
+#define supportedPDFVersionStr "1.4"
+#define supportedPDFVersionNum 1.4
 
 // copyright notice
-#define xpdfCopyright "Copyright \251 1996-1998 Derek B. Noonburg"
+#define xpdfCopyright "Copyright 1996-2002 Glyph & Cog, LLC"
+
+//------------------------------------------------------------------------
+// paper size
+//------------------------------------------------------------------------
 
 // default paper size (in points) for PostScript output
 #ifdef A4_PAPER
@@ -32,11 +37,24 @@
 #define defPaperHeight 792
 #endif
 
-// config file name
-#if defined(VMS) || defined(__EMX__)
-#define xpdfConfigFile "xpdfrc"
+//------------------------------------------------------------------------
+// config file (xpdfrc) path
+//------------------------------------------------------------------------
+
+// user config file name, relative to the user's home directory
+#if defined(VMS) || (defined(WIN32) && !defined(__CYGWIN32__))
+#define xpdfUserConfigFile "xpdfrc"
 #else
-#define xpdfConfigFile ".xpdfrc"
+#define xpdfUserConfigFile ".xpdfrc"
+#endif
+
+// system config file name (set via the configure script)
+#ifdef SYSTEM_XPDFRC
+#define xpdfSysConfigFile SYSTEM_XPDFRC
+#else
+// under Windows, we get the directory with the executable and then
+// append this file name
+#define xpdfSysConfigFile "xpdfrc"
 #endif
 
 //------------------------------------------------------------------------
@@ -46,8 +64,26 @@
 // default maximum size of color cube to allocate
 #define defaultRGBCube 5
 
-// number of fonts to cache
-#define fontCacheSize 16
+// number of fonts (combined t1lib, FreeType, X server) to cache
+#define xOutFontCacheSize 64
+
+// number of Type 3 fonts to cache
+#define xOutT3FontCacheSize 8
+
+//------------------------------------------------------------------------
+// popen
+//------------------------------------------------------------------------
+
+#ifdef _MSC_VER
+#define popen _popen
+#define pclose _pclose
+#endif
+
+#if defined(VMS) || defined(VMCMS) || defined(DOS) || defined(OS2) || defined(__EMX__) || defined(WIN32) || defined(__DJGPP__) || defined(__CYGWIN32__) || defined(MACOS)
+#define POPEN_READ_MODE "rb"
+#else
+#define POPEN_READ_MODE "r"
+#endif
 
 //------------------------------------------------------------------------
 // uncompress program
@@ -81,10 +117,11 @@
 // Win32 stuff
 //------------------------------------------------------------------------
 
-#ifdef WIN32
 #ifdef CDECL
 #undef CDECL
 #endif
+
+#ifdef _MSC_VER
 #define CDECL __cdecl
 #else
 #define CDECL
