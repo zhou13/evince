@@ -127,6 +127,8 @@ libgpdf_a_SOURCES =			\
 	GnomeVFSStream.h		\
 	GPOutputDev.cc			\
 	GPOutputDev.h			\
+	gpdf-hig-dialog.c		\
+	gpdf-hig-dialog.h		\
 	Thumb.cc			\
 	Thumb.h				\
 	gpdf-control.cc			\
