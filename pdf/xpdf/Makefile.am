@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+#SUBDIRS = . tests
 
 INCLUDES =							\
 	-I$(top_srcdir)						\
@@ -308,7 +308,8 @@ stock_DATA = 				\
 
 gladedir = $(datadir)/gpdf/glade
 glade_DATA = 				\
-	gpdf-properties-dialog.glade
+	gpdf-properties-dialog.glade	\
+	gpdf-findtext-dialog.glade
 
 server_in_files = GNOME_PDF.server.in.in
 serverdir = $(libdir)/bonobo/servers
