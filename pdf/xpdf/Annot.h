@@ -40,6 +40,10 @@ public:
   // Get dictionary
   Dict *getDict() {return dict; };
 
+  // Get annot appearance ID
+  int getRefNum() {return appearance.getRefNum();};
+  int getRefGen() {return appearance.getRefGen();};
+  
 private:
 
   XRef *xref;			// the xref table for this PDF file
