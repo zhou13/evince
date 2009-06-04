@@ -98,6 +98,10 @@
 #include <poppler.h>
 #endif
 
+#ifdef PLATFORM_HILDON
+#include <hildon/hildon-file-chooser-dialog.h>
+#endif
+
 typedef enum {
 	PAGE_MODE_DOCUMENT,
 	PAGE_MODE_PASSWORD
@@ -306,7 +310,11 @@ static void     ev_window_media_player_key_pressed      (EvWindow         *windo
 							 gpointer          user_data);
 static void     ev_window_save_print_page_setup         (EvWindow         *window);
 
+#ifndef PLATFORM_HILDON
 G_DEFINE_TYPE (EvWindow, ev_window, GTK_TYPE_WINDOW)
+#else
+G_DEFINE_TYPE (EvWindow, ev_window, HILDON_TYPE_WINDOW)
+#endif
 
 static void
 ev_window_set_action_sensitive (EvWindow   *ev_window,
@@ -514,6 +522,9 @@ ev_window_set_view_accels_sensitivity (EvWindow *window, gboolean sensitive)
 static void
 set_widget_visibility (GtkWidget *widget, gboolean visible)
 {
+        if (!widget)
+                return;
+
 	g_assert (GTK_IS_WIDGET (widget));
 	
 	if (visible)
@@ -2077,6 +2088,7 @@ ev_window_cmd_file_open (GtkAction *action, EvWindow *window)
 	const gchar *default_uri;
 	gchar       *parent_uri = NULL;
 
+#ifndef PLATFORM_HILDON
 	chooser = gtk_file_chooser_dialog_new (_("Open Document"),
 					       GTK_WINDOW (window),
 					       GTK_FILE_CHOOSER_ACTION_OPEN,
@@ -2085,8 +2097,22 @@ ev_window_cmd_file_open (GtkAction *action, EvWindow *window)
 					       GTK_STOCK_OPEN, GTK_RESPONSE_OK,
 					       NULL);
 
-	ev_document_factory_add_filters (chooser, NULL);
 	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (chooser), TRUE);
+
+	gtk_dialog_set_default_response (GTK_DIALOG (chooser), GTK_RESPONSE_OK);
+        gtk_dialog_set_alternative_button_order (GTK_DIALOG (chooser),
+                                                 GTK_RESPONSE_OK,
+                                                 GTK_RESPONSE_CANCEL,
+                                                 -1);
+            
+#else
+
+        chooser = hildon_file_chooser_dialog_new (GTK_WINDOW (window),
+                                                  GTK_FILE_CHOOSER_ACTION_OPEN);
+	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (chooser), FALSE);
+#endif /* !PLATFORM_HILDON */
+
+	ev_document_factory_add_filters (chooser, NULL);
 	gtk_file_chooser_set_local_only (GTK_FILE_CHOOSER (chooser), FALSE);
 
 	default_uri = ev_application_get_filechooser_uri (EV_APP, GTK_FILE_CHOOSER_ACTION_OPEN);
@@ -2629,19 +2655,25 @@ ev_window_cmd_save_as (GtkAction *action, EvWindow *ev_window)
 	GFile *file;
 	const gchar *default_uri;
 
+#ifndef PLATFORM_HILDON
 	fc = gtk_file_chooser_dialog_new (
 		_("Save a Copy"),
 		GTK_WINDOW (ev_window), GTK_FILE_CHOOSER_ACTION_SAVE,
 		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 		GTK_STOCK_SAVE, GTK_RESPONSE_OK,
 		NULL);
-
-	ev_document_factory_add_filters (fc, ev_window->priv->document);
 	gtk_dialog_set_default_response (GTK_DIALOG (fc), GTK_RESPONSE_OK);
         gtk_dialog_set_alternative_button_order (GTK_DIALOG (fc),
                                                 GTK_RESPONSE_OK,
                                                 GTK_RESPONSE_CANCEL,
                                                 -1);
+#else
+
+        fc = hildon_file_chooser_dialog_new (GTK_WINDOW (ev_window),
+                                             GTK_FILE_CHOOSER_ACTION_OPEN);
+#endif /* !PLATFORM_HILDON */
+
+	ev_document_factory_add_filters (fc, ev_window->priv->document);
 
 	gtk_file_chooser_set_local_only (GTK_FILE_CHOOSER (fc), FALSE);
 	gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (fc), TRUE);
@@ -5924,6 +5956,7 @@ ev_window_media_player_key_pressed (EvWindow    *window,
 static void
 ev_window_init (EvWindow *ev_window)
 {
+        EvWindowPrivate *priv;
 	GtkActionGroup *action_group;
 	GtkAccelGroup *accel_group;
 	GError *error = NULL;
@@ -5936,7 +5969,7 @@ ev_window_init (EvWindow *ev_window)
 	g_signal_connect (ev_window, "window_state_event",
 			  G_CALLBACK (window_state_event_cb), NULL);
 
-	ev_window->priv = EV_WINDOW_GET_PRIVATE (ev_window);
+	priv = ev_window->priv = EV_WINDOW_GET_PRIVATE (ev_window);
 
 	ev_window->priv->page_mode = PAGE_MODE_DOCUMENT;
 	ev_window->priv->title = ev_window_title_new (ev_window);
@@ -5985,9 +6018,13 @@ ev_window_init (EvWindow *ev_window)
 					    action_group, 0);
 
 	ui_path = g_build_filename (ev_application_get_data_dir (EV_APP),
-				    "evince-ui.xml", NULL);
-	if (!gtk_ui_manager_add_ui_from_file (
-		ev_window->priv->ui_manager, ui_path, &error))
+#ifndef PLATFORM_HILDON
+                                    "evince-ui.xml",
+#else
+                                    "evince-hildon-ui.xml",
+#endif
+                                    NULL);
+	if (!gtk_ui_manager_add_ui_from_file (priv->ui_manager, ui_path, &error))
 	{
 		g_warning ("building menus failed: %s", error->message);
 		g_error_free (error);
@@ -6002,6 +6039,7 @@ ev_window_init (EvWindow *ev_window)
 				  G_CALLBACK (ev_window_setup_recent),
 				  ev_window);
 
+#ifndef PLATFORM_HILDON
 	ev_window->priv->menubar =
 		 gtk_ui_manager_get_widget (ev_window->priv->ui_manager,
 					    "/MainMenu");
@@ -6023,6 +6061,13 @@ ev_window_init (EvWindow *ev_window)
 			    FALSE, FALSE, 0);
 	gtk_widget_show (ev_window->priv->toolbar);
 
+#else /* PLATFORM_HILDON */
+        hildon_window_set_menu (HILDON_WINDOW (ev_window),
+                                GTK_MENU (gtk_ui_manager_get_widget (priv->ui_manager, "/MainMenu")));
+        priv->toolbar = gtk_ui_manager_get_widget (priv->ui_manager, "/DefaultToolBar");
+        hildon_window_add_toolbar (HILDON_WINDOW (ev_window), GTK_TOOLBAR (priv->toolbar));
+#endif
+        
 	/* Add the main area */
 	ev_window->priv->hpaned = gtk_hpaned_new ();
 	g_signal_connect (ev_window->priv->hpaned,

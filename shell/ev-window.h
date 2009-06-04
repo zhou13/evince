@@ -26,6 +26,10 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
+#ifdef PLATFORM_HILDON
+#include <hildon/hildon-window.h>
+#endif
+
 #include "ev-link.h"
 #include "ev-page-cache.h"
 
@@ -61,12 +65,20 @@ typedef struct _EvWindowPrivate EvWindowPrivate;
 
 
 struct _EvWindow {
+#ifndef PLATFORM_HILDON
 	GtkWindow		base_instance;
+#else
+	HildonWindow		base_instance;
+#endif
 	EvWindowPrivate		*priv;
 };
 
 struct _EvWindowClass {
+#ifndef PLATFORM_HILDON
 	GtkWindowClass		base_class;
+#else
+	HildonWindowClass	base_class;
+#endif
 };
 
 GType		ev_window_get_type	  (void);

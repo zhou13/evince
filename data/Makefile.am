@@ -16,9 +16,14 @@ man_MANS=evince.1
 
 uidir = $(pkgdatadir)
 ui_DATA =				\
-	evince-ui.xml			\
 	evince-toolbar.xml		\
 	hand-open.png
+
+if !PLATFORM_HILDON
+ui_DATA += evince-ui.xml
+else
+ui_DATA += evince-hildon-ui.xml
+endif
 
 if ENABLE_PREVIEWER
 ui_DATA += evince-previewer-ui.xml
