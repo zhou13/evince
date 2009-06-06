@@ -4979,7 +4979,7 @@ static const GtkActionEntry entries[] = {
 	{ "Help", NULL, N_("_Help") },
 
 	/* File menu */
-	{ "FileOpen", GTK_STOCK_OPEN, N_("_Open..."), "<control>O",
+	{ "FileOpen", GTK_STOCK_OPEN, N_("_Open..."), NULL,
 	  ACTION_TOOLTIP (N_("Open an existing document")),
 	  G_CALLBACK (ev_window_cmd_file_open) },
 	{ "FileOpenCopy", NULL, N_("Op_en a Copy"), "<control>N",
@@ -5000,7 +5000,7 @@ static const GtkActionEntry entries[] = {
 	  G_CALLBACK (ev_window_cmd_file_close_window) },
 
         /* Edit menu */
-        { "EditCopy", GTK_STOCK_COPY, NULL, "<control>C", NULL,
+        { "EditCopy", GTK_STOCK_COPY, NULL, NULL, NULL,
           G_CALLBACK (ev_window_cmd_edit_copy) },
  	{ "EditSelectAll", GTK_STOCK_SELECT_ALL, N_("Select _All"), "<control>A", NULL,
 	  G_CALLBACK (ev_window_cmd_edit_select_all) },
@@ -5062,7 +5062,7 @@ static const GtkActionEntry entries[] = {
 	  G_CALLBACK (ev_window_cmd_start_presentation) },
 
 	/* Accellerators */
-	{ "Escape", NULL, "", "Escape", "",
+	{ "Escape", NULL, "", "Escape", NULL,
 	  G_CALLBACK (ev_window_cmd_escape) },
         { "Slash", GTK_STOCK_FIND, NULL, "slash", NULL,
           G_CALLBACK (ev_window_cmd_edit_find) },
