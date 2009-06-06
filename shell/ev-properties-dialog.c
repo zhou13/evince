@@ -25,6 +25,11 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
+#ifdef PLATFORM_HILDON
+#include <hildon/hildon-gtk.h>
+#include <hildon/hildon-pannable-area.h>
+#endif
+
 #include "ev-document-fonts.h"
 #include "ev-page-cache.h"
 #include "ev-properties-dialog.h"
@@ -90,9 +95,28 @@ ev_properties_dialog_set_document (EvPropertiesDialog *properties,
 	if (properties->general_page == NULL) {
 		label = gtk_label_new (_("General"));
 		properties->general_page = ev_properties_view_new (uri);
+
+#ifndef PLATFORM_HILDON
 		gtk_notebook_append_page (GTK_NOTEBOOK (properties->notebook),
 					  properties->general_page, label);
 		gtk_widget_show (properties->general_page);
+#else
+        {
+                GtkWidget *viewport, *pannable;
+
+                viewport = gtk_viewport_new (NULL, NULL);
+                gtk_container_add (GTK_CONTAINER (viewport), properties->general_page);
+		gtk_widget_show (properties->general_page);
+
+                pannable = hildon_pannable_area_new ();
+                gtk_container_add (GTK_CONTAINER (pannable), viewport);
+                gtk_widget_show (viewport);
+
+		gtk_notebook_append_page (GTK_NOTEBOOK (properties->notebook),
+					  pannable, label);
+                gtk_widget_show (pannable);
+        }
+#endif /* !PLATFORM_HILDON */
 	}
 	ev_properties_view_set_info (EV_PROPERTIES_VIEW (properties->general_page), info);
 

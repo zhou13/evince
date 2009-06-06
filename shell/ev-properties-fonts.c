@@ -25,6 +25,10 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
+#ifdef PLATFORM_HILDON
+#include <hildon/hildon-gtk.h>
+#endif
+
 #include "ev-document-fonts.h"
 #include "ev-job-scheduler.h"
 #include "ev-jobs.h"
@@ -118,8 +122,13 @@ ev_properties_fonts_init (EvPropertiesFonts *properties)
 					GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (swindow),
 					     GTK_SHADOW_IN);
-	
+
+#ifndef PLATFORM_HILDON
 	properties->fonts_treeview = gtk_tree_view_new ();
+#else
+	properties->fonts_treeview = hildon_gtk_tree_view_new (HILDON_SIZE_AUTO);
+#endif
+
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW (properties->fonts_treeview),
 					   FALSE);
 	column = gtk_tree_view_column_new ();
