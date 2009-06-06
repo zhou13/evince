@@ -1055,9 +1055,22 @@ ev_application_init (EvApplication *ev_application)
         g_signal_connect (ev_application->program, "notify::is-topmost",
                           G_CALLBACK(sync_is_topmost_cb), ev_application);
 
+        /* This is necessary since the setting is only installed
+         * during class initialisation. See bug #585024.
+         */
+        /* For "gtk-menu-images" setting   */
+        g_type_class_unref (g_type_class_ref (GTK_TYPE_IMAGE_MENU_ITEM));
+        /* For "gtk-button-images" setting */
+        g_type_class_unref (g_type_class_ref (GTK_TYPE_BUTTON));
+        /* For "gtk-toolbar-style" setting */
+        g_type_class_unref (g_type_class_ref (GTK_TYPE_TOOLBAR));
+
         /* FIXMEchpe sort of strange that maemo doesn't all of this out-of-the-box... */
         g_object_set (gtk_settings_get_for_screen (gdk_screen_get_default ()),
                       "gtk-alternative-button-order", TRUE,
+                      "gtk-toolbar-style", GTK_TOOLBAR_ICONS,
+                      "gtk-menu-images", FALSE,
+                      "gtk-button-images", FALSE,
                       "gtk-enable-mnemonics", FALSE,
 
                       /* We want the default of FALSE for this property, but to work
