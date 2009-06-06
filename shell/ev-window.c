@@ -5733,6 +5733,7 @@ ev_view_popup_cmd_save_image_as (GtkAction *action, EvWindow *window)
 	if (!window->priv->image)
 		return;
 
+#ifndef PLATFORM_HILDON
 	fc = gtk_file_chooser_dialog_new (_("Save Image"),
 					  GTK_WINDOW (window),
 					  GTK_FILE_CHOOSER_ACTION_SAVE,
@@ -5746,6 +5747,12 @@ ev_view_popup_cmd_save_image_as (GtkAction *action, EvWindow *window)
                                                  GTK_RESPONSE_OK,
                                                  GTK_RESPONSE_CANCEL,
                                                  -1);
+
+#else
+
+        fc = hildon_file_chooser_dialog_new (GTK_WINDOW (window),
+                                             GTK_FILE_CHOOSER_ACTION_SAVE);
+#endif /* !PLATFORM_HILDON */
 
 	gtk_file_chooser_set_local_only (GTK_FILE_CHOOSER (fc), FALSE);
 	gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (fc), TRUE);
