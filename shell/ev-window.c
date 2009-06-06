@@ -164,8 +164,10 @@ struct _EvWindowPrivate {
 	guint             recent_ui_id;
 	GtkUIManager     *ui_manager;
 
+#ifndef PLATFORM_HILDON
 	/* Fullscreen mode */
 	GtkWidget *fullscreen_toolbar;
+#endif
 
 	/* Presentation mode */
 	guint      presentation_timeout_id;
@@ -559,9 +561,11 @@ update_chrome_visibility (EvWindow *window)
 	
 	ev_window_set_action_sensitive (window, "EditToolbar", toolbar);
 
+#ifndef PLATFORM_HILDON
 	if (priv->fullscreen_toolbar != NULL) {
 		set_widget_visibility (priv->fullscreen_toolbar, fullscreen_toolbar);
 	}
+#endif
 }
 
 static void
@@ -3390,6 +3394,8 @@ ev_window_update_fullscreen_action (EvWindow *window)
 		(action, G_CALLBACK (ev_window_cmd_view_fullscreen), window);
 }
 
+#ifndef PLATFORM_HILDON
+
 static void
 fullscreen_toolbar_setup_item_properties (GtkUIManager *ui_manager)
 {
@@ -3429,6 +3435,8 @@ fullscreen_toolbar_remove_shadow (GtkWidget *toolbar)
 	gtk_widget_set_name (toolbar, "fullscreen-toolbar");
 }
 
+#endif /* PLATFORM_HILDON */
+
 static void
 ev_window_run_fullscreen (EvWindow *window)
 {
@@ -3437,7 +3445,8 @@ ev_window_run_fullscreen (EvWindow *window)
 
 	if (ev_view_get_fullscreen (view))
 		return;
-	
+
+#ifndef PLATFORM_HILDON
 	if (!window->priv->fullscreen_toolbar) {
 		window->priv->fullscreen_toolbar =
 			gtk_ui_manager_get_widget (window->priv->ui_manager,
@@ -3454,6 +3463,7 @@ ev_window_run_fullscreen (EvWindow *window)
 		gtk_box_reorder_child (GTK_BOX (window->priv->main_box),
 				       window->priv->fullscreen_toolbar, 1);
 	}
+#endif /* !PLATFORM_HILDON */
 
 	if (ev_view_get_presentation (view)) {
 		ev_window_stop_presentation (window, FALSE);
