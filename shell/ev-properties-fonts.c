@@ -27,6 +27,7 @@
 
 #ifdef PLATFORM_HILDON
 #include <hildon/hildon-gtk.h>
+#include <hildon/hildon-pannable-area.h>
 #endif
 
 #include "ev-document-fonts.h"
@@ -115,7 +116,8 @@ ev_properties_fonts_init (EvPropertiesFonts *properties)
 
 	gtk_container_set_border_width (GTK_CONTAINER (properties), 12);
 	gtk_box_set_spacing (GTK_BOX (properties), 6);
-	
+
+#if 1 // #ifndef PLATFORM_HILDON
 	swindow = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (swindow),
 					GTK_POLICY_AUTOMATIC,
@@ -123,11 +125,12 @@ ev_properties_fonts_init (EvPropertiesFonts *properties)
 	gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (swindow),
 					     GTK_SHADOW_IN);
 
-#ifndef PLATFORM_HILDON
 	properties->fonts_treeview = gtk_tree_view_new ();
 #else
+        swindow = hildon_pannable_area_new ();
+
 	properties->fonts_treeview = hildon_gtk_tree_view_new (HILDON_SIZE_AUTO);
-#endif
+#endif /* !PLATFORM_HILDON */
 
 	gtk_tree_view_set_headers_visible (GTK_TREE_VIEW (properties->fonts_treeview),
 					   FALSE);
