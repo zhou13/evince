@@ -4966,8 +4966,10 @@ ev_window_class_init (EvWindowClass *ev_window_class)
 
 #ifndef PLATFORM_HILDON
 #define ACTION_TOOLTIP(string) (string)
+#define ACTION_ACCEL(nonHildonString, hildonString) (nonHildonString)
 #else
 #define ACTION_TOOLTIP(string) (NULL)
+#define ACTION_ACCEL(nonHildonString, hildonString) (hildonString)
 #endif /* !PLATFORM_HILDON */
 
 /* Normal items */
@@ -5019,10 +5021,12 @@ static const GtkActionEntry entries[] = {
 	  G_CALLBACK (ev_window_cmd_edit_rotate_right) },
 
         /* View menu */
-        { "ViewZoomIn", GTK_STOCK_ZOOM_IN, NULL, "<control>plus",
+        { "ViewZoomIn", GTK_STOCK_ZOOM_IN, NULL,
+          ACTION_ACCEL ("<control>plus", "F7" /* HILDON_HARDKEY_INCREASE */),
           ACTION_TOOLTIP (N_("Enlarge the document")),
           G_CALLBACK (ev_window_cmd_view_zoom_in) },
-        { "ViewZoomOut", GTK_STOCK_ZOOM_OUT, NULL, "<control>minus",
+        { "ViewZoomOut", GTK_STOCK_ZOOM_OUT, NULL,
+          ACTION_ACCEL ("<control>minus", "F8" /* HILDON_HARDKEY_DECREASE */),
           ACTION_TOOLTIP (N_("Shrink the document")),
           G_CALLBACK (ev_window_cmd_view_zoom_out) },
         { "ViewReload", GTK_STOCK_REFRESH, N_("_Reload"), "<control>R",
@@ -5125,10 +5129,12 @@ static const GtkToggleActionEntry toggle_entries[] = {
         { "ViewDual", EV_STOCK_VIEW_DUAL, N_("_Dual"), NULL,
 	  ACTION_TOOLTIP (N_("Show two pages at once")),
 	  G_CALLBACK (ev_window_cmd_dual), FALSE },
-        { "ViewFullscreen", GTK_STOCK_FULLSCREEN, N_("_Fullscreen"), "F11",
+        { "ViewFullscreen", GTK_STOCK_FULLSCREEN, N_("_Fullscreen"),
+          ACTION_ACCEL ("F11", "F6" /* HILDON_HARDKEY_FULLSCREEN */),
           ACTION_TOOLTIP (N_("Expand the window to fill the screen")),
           G_CALLBACK (ev_window_cmd_view_fullscreen) },
-        { "ViewPresentation", EV_STOCK_RUN_PRESENTATION, N_("Pre_sentation"), "F5",
+        { "ViewPresentation", EV_STOCK_RUN_PRESENTATION, N_("Pre_sentation"),
+          ACTION_ACCEL ("F5", NULL),
           ACTION_TOOLTIP (N_("Run document as a presentation")),
           G_CALLBACK (ev_window_cmd_view_presentation) },
         { "ViewBestFit", EV_STOCK_ZOOM_PAGE, N_("_Best Fit"), NULL,
