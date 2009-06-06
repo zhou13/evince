@@ -104,6 +104,22 @@ update-icon-cache:
 
 
 #
+# Hildon service file
+#
+
+ossoservice_in_files = evince.service.in
+
+if PLATFORM_HILDON
+
+servicedir = $(shell $(PKG_CONFIG) osso-af-settings --variable=dbusservicedir)
+service_DATA = $(ossoservice_in_files:.service.in=.service)
+
+%.service: %.service.in Makefile
+	sed -e "s|%bindir%|$(bindir)|" $< > $@
+
+endif # PLATFORM_HILDON
+
+#
 # Extra files to be included in the tarball
 #
 
@@ -112,7 +128,8 @@ EXTRA_DIST =				\
 	$(DESKTOP_IN_FILES)		\
 	$(schema_in_files)		\
 	$(man_MANS)			\
-	$(NULL)				
+	$(NULL)				\
+	$(ossoservice_in_files)
 
 #
 # Clean up properly

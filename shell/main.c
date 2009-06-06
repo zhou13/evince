@@ -19,6 +19,7 @@
 
 #include "config.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -53,6 +54,11 @@
 #include <conio.h>
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
+#endif
+
+// FIXME!
+#ifdef PLATFORM_HILDON
+#undef ENABLE_DBUS
 #endif
 
 static gchar   *ev_page_label;
@@ -396,6 +402,7 @@ main (int argc, char *argv[])
 	GOptionContext *context;
 	GHashTable *args;
 	GError *error = NULL;
+        const char *home_dir;
 
 #ifdef G_OS_WIN32
 
@@ -422,16 +429,15 @@ main (int argc, char *argv[])
 	}
 #endif
 
-	/* Init glib threads asap */
-	if (!g_thread_supported ())
-		g_thread_init (NULL);
-
 #ifdef ENABLE_NLS
 	/* Initialize the i18n stuff */
 	bindtextdomain (GETTEXT_PACKAGE, GNOMELOCALEDIR);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
 	textdomain (GETTEXT_PACKAGE);
 #endif
+
+	/* Init glib threads asap */
+        g_thread_init (NULL);
 
 	context = g_option_context_new (N_("GNOME Document Viewer"));
 	g_option_context_set_translation_domain(context, GETTEXT_PACKAGE);
@@ -492,7 +498,10 @@ main (int argc, char *argv[])
 	/* Change directory so we don't prevent unmounting in case the initial cwd
 	 * is on an external device (see bug #575436)
 	 */
-	g_chdir (g_get_home_dir ());	
+        home_dir = g_get_home_dir ();
+        if (home_dir != NULL &&
+            g_chdir (home_dir) < 0)
+                g_warning ("Failed to chdir to '%s': %s\n", home_dir, g_strerror (errno));
 
 	gtk_main ();
 

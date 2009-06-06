@@ -1,6 +1,7 @@
 /* this file is part of evince, a gnome document viewer
  *
- *  Copyright (C) 2004 Martin Kretzschmar
+ * Copyright (C) 2004 Martin Kretzschmar
+ * Copyright © 2007, 2009 Christian Persch
  *
  *  Author:
  *    Martin Kretzschmar <martink@gnome.org>
@@ -54,6 +55,11 @@
 #include "ev-application-service.h"
 #endif
 
+#ifdef PLATFORM_HILDON
+#include <libosso.h>
+#include <hildon/hildon-program.h>
+#endif /* PLATFORM_HILDON */
+
 static void ev_application_save_print_settings (EvApplication *application);
 
 struct _EvApplication {
@@ -87,6 +93,11 @@ struct _EvApplication {
 	GtkPrintSettings *print_settings;
 	GtkPageSetup     *page_setup;
 	GKeyFile         *print_settings_file;
+
+#ifdef PLATFORM_HILDON
+        osso_context_t *osso_context;
+        HildonProgram *program;
+#endif
 };
 
 struct _EvApplicationClass {
@@ -157,6 +168,71 @@ ev_application_register_service (EvApplication *application)
 	return TRUE;
 }
 #endif /* ENABLE_DBUS */
+
+#ifdef PLATFORM_HILDON
+
+static void
+osso_hw_event_cb (osso_hw_state_t *state,
+                  gpointer user_data)
+{
+        EvApplication *ev_application = EV_APPLICATION (user_data);
+
+        /* This callback can be called immediately upon registration.
+         * So check if we're started up yet.
+         */
+        if (ev_application->program == NULL)
+                  return;
+
+#if GNOME_ENABLE_DEBUG
+          if (state->shutdown_ind) {
+                  g_print ("Going to shut down\n");
+          } else if (state->save_unsaved_data_ind) {
+                  g_print ("Should save unsaved data\n");
+          } else if (state->memory_low_ind) {
+                  g_print ("Should try to free some memory\n");
+          } else if (state->system_inactivity_ind) {
+                  g_print ("System inactive\n");
+          }
+#endif /* GNOME_ENABLE_DEBUG */
+}
+
+static int
+osso_rpc_cb (const char *interface,
+             const char *method,
+             GArray *args,
+             gpointer user_data,
+             osso_rpc_t *ret)
+{
+//      EvApplication *ev_application = EV_APPLICATION (user_data);
+
+#if GNOME_ENABLE_DEBUG
+        g_print ("OSSO RPC iface %s method %s\n", interface, method);
+#endif /* GNOME_ENABLE_DEBUG */
+
+        if (strcmp (method, "top_application") == 0) {
+                /* FIXME: present the window */
+                /* gtk_window_present (GTK_WINDOW (window)); */
+        }
+
+        ret->type = DBUS_TYPE_INVALID;
+        return OSSO_OK;
+}
+
+static void
+sync_is_topmost_cb (HildonProgram *program,
+                    GParamSpec *pspec,
+                    EvApplication *application)
+{
+        if (hildon_program_get_is_topmost (program)) {
+                hildon_program_set_can_hibernate (program, FALSE);
+        } else {
+                /* FIXMEchpe: save state here */
+
+                hildon_program_set_can_hibernate (program, TRUE);
+        }
+}
+
+#endif /* PLATFORM_HILDON */
 
 /**
  * ev_application_get_instance:
@@ -643,7 +719,11 @@ ev_application_open_window (EvApplication  *application,
 
 	if (!GTK_WIDGET_REALIZED (new_window))
 		gtk_widget_realize (new_window);
-	
+
+#ifdef PLATFORM_HILDON
+      hildon_program_add_window (EV_APP->program, HILDON_WINDOW (new_window));
+#endif
+
 #ifdef GDK_WINDOWING_X11
 	if (timestamp <= 0)
 		timestamp = gdk_x11_get_server_time (GTK_WIDGET (new_window)->window);
@@ -909,6 +989,16 @@ ev_application_shutdown (EvApplication *application)
         instance = NULL;
 	
 	gtk_main_quit ();
+
+#ifdef PLATFORM_HILDON
+        g_signal_handlers_disconnect_by_func (application->program,
+                                              G_CALLBACK (sync_is_topmost_cb),
+                                              application);
+        application->program = NULL;
+
+        osso_deinitialize (application->osso_context);
+        application->osso_context = NULL;
+#endif /* PLATFORM_HILDON */
 }
 
 static void
@@ -919,15 +1009,60 @@ ev_application_class_init (EvApplicationClass *ev_application_class)
 static void
 ev_application_init (EvApplication *ev_application)
 {
-	gint i;
+#ifndef PLATFORM_HILDON
+	int i;
 	const gchar *home_dir;
-	gchar *toolbar_path;
+	char *toolbar_path;
+#endif /* !PLATFORM_HILDON */
 
+#ifdef PLATFORM_HILDON
+        /* FIXME chpe: or does this need to be allocated (if osso_hw_set_event_cb keeps a pointer) ? */
+        osso_hw_state_t hw_events = {
+                TRUE /* shutdown */,
+                TRUE /* save unsaved data */,
+                TRUE /* low memory */,
+                FALSE /* system inactivity */,
+                OSSO_DEVMODE_NORMAL /* device mode */
+                /* FIXMEchpe: or is OSSO_DEVMODE_INVALID the value to use
+                * when not interested in this signal? The docs don't tell.
+                */
+        };
+        /* Init libosso */
+        ev_application->osso_context = osso_initialize ("org.gnome.Evince" /* Same as in evince.service file */,
+                                                        VERSION, FALSE, NULL);
+        if (ev_application->osso_context == NULL) {
+                g_printerr ("Failed to initialise osso\n");
+                exit (1);
+        }
+
+        if (osso_rpc_set_default_cb_f (ev_application->osso_context,
+                                       osso_rpc_cb,
+                                       ev_application) != OSSO_OK ||
+            osso_hw_set_event_cb (ev_application->osso_context,
+                                  &hw_events,
+                                  osso_hw_event_cb,
+                                  ev_application) != OSSO_OK) {
+                g_printerr ("Failed to connect OSSO handlers\n");
+                exit (1);
+        }
+
+        ev_application->program = HILDON_PROGRAM (hildon_program_get_instance ());
+
+        g_signal_connect (ev_application->program, "notify::is-topmost",
+                          G_CALLBACK(sync_is_topmost_cb), ev_application);
+#endif /* PLATFORM_HILDON */
+
+#ifndef PLATFORM_HILDON
         ev_application->dot_dir = g_build_filename (g_get_home_dir (),
                                                     ".gnome2",
                                                     "evince",
                                                     NULL);
-
+#else
+        ev_application->dot_dir = g_build_filename (g_get_user_config_dir (),
+                                                    "evince",
+                                                    NULL);
+#endif
+        
         /* FIXME: why make this fatal? */
         if (!ev_dir_ensure_exists (ev_application->dot_dir, 0700))
                 exit (1);
@@ -946,6 +1081,7 @@ ev_application_init (EvApplication *ev_application)
 
 	ev_application_init_session (ev_application);
 
+#ifndef PLATFORM_HILDON
 	home_dir = g_get_home_dir ();
 	if (home_dir) {
 		ev_application->accel_map_file = g_build_filename (home_dir,
@@ -955,6 +1091,7 @@ ev_application_init (EvApplication *ev_application)
 								   NULL);
 		gtk_accel_map_load (ev_application->accel_map_file);
 	}
+#endif /* !PLATFORM_HILDON */
 	
 	ev_application->toolbars_model = egg_toolbars_model_new ();
 
@@ -973,6 +1110,7 @@ ev_application_init (EvApplication *ev_application)
 	}
 	g_free (toolbar_path);
 
+#ifndef PLATFORM_HILDON
 	/* Open item doesn't exist anymore,
 	 * convert it to OpenRecent for compatibility
 	 */
@@ -988,6 +1126,7 @@ ev_application_init (EvApplication *ev_application)
 			break;
 		}
 	}
+#endif /* !PLATFORM_HILDON */
 
 	egg_toolbars_model_set_flags (ev_application->toolbars_model, 0,
 				      EGG_TB_MODEL_NOT_REMOVABLE);
