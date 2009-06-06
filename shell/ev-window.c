@@ -4964,6 +4964,12 @@ ev_window_class_init (EvWindowClass *ev_window_class)
 	g_type_class_add_private (g_object_class, sizeof (EvWindowPrivate));
 }
 
+#ifndef PLATFORM_HILDON
+#define ACTION_TOOLTIP(string) (string)
+#else
+#define ACTION_TOOLTIP(string) (NULL)
+#endif /* !PLATFORM_HILDON */
+
 /* Normal items */
 static const GtkActionEntry entries[] = {
 	{ "File", NULL, N_("_File") },
@@ -4974,19 +4980,19 @@ static const GtkActionEntry entries[] = {
 
 	/* File menu */
 	{ "FileOpen", GTK_STOCK_OPEN, N_("_Open..."), "<control>O",
-	  N_("Open an existing document"),
+	  ACTION_TOOLTIP (N_("Open an existing document")),
 	  G_CALLBACK (ev_window_cmd_file_open) },
 	{ "FileOpenCopy", NULL, N_("Op_en a Copy"), "<control>N",
-	  N_("Open a copy of the current document in a new window"),
+	  ACTION_TOOLTIP (N_("Open a copy of the current document in a new window")),
 	  G_CALLBACK (ev_window_cmd_file_open_copy) },
        	{ "FileSaveAs", GTK_STOCK_SAVE_AS, N_("_Save a Copy..."), "<control>S",
-	  N_("Save a copy of the current document"),
+	  ACTION_TOOLTIP (N_("Save a copy of the current document")),
 	  G_CALLBACK (ev_window_cmd_save_as) },
 	{ "FilePageSetup", GTK_STOCK_PAGE_SETUP, N_("Page Set_up..."), NULL,
-	  N_("Setup the page settings for printing"),
+	  ACTION_TOOLTIP (N_("Setup the page settings for printing")),
 	  G_CALLBACK (ev_window_cmd_file_print_setup) },
 	{ "FilePrint", GTK_STOCK_PRINT, N_("_Print..."), "<control>P",
-	  N_("Print this document"),
+	  ACTION_TOOLTIP (N_("Print this document")),
 	  G_CALLBACK (ev_window_cmd_file_print) },
 	{ "FileProperties", GTK_STOCK_PROPERTIES, N_("P_roperties"), "<alt>Return", NULL,
 	  G_CALLBACK (ev_window_cmd_file_properties) },			      
@@ -4999,7 +5005,7 @@ static const GtkActionEntry entries[] = {
  	{ "EditSelectAll", GTK_STOCK_SELECT_ALL, N_("Select _All"), "<control>A", NULL,
 	  G_CALLBACK (ev_window_cmd_edit_select_all) },
         { "EditFind", GTK_STOCK_FIND, N_("_Find..."), "<control>F",
-          N_("Find a word or phrase in the document"),
+          ACTION_TOOLTIP (N_("Find a word or phrase in the document")),
           G_CALLBACK (ev_window_cmd_edit_find) },
 	{ "EditFindNext", NULL, N_("Find Ne_xt"), "<control>G", NULL,
 	  G_CALLBACK (ev_window_cmd_edit_find_next) },
@@ -5014,13 +5020,13 @@ static const GtkActionEntry entries[] = {
 
         /* View menu */
         { "ViewZoomIn", GTK_STOCK_ZOOM_IN, NULL, "<control>plus",
-          N_("Enlarge the document"),
+          ACTION_TOOLTIP (N_("Enlarge the document")),
           G_CALLBACK (ev_window_cmd_view_zoom_in) },
         { "ViewZoomOut", GTK_STOCK_ZOOM_OUT, NULL, "<control>minus",
-          N_("Shrink the document"),
+          ACTION_TOOLTIP (N_("Shrink the document")),
           G_CALLBACK (ev_window_cmd_view_zoom_out) },
         { "ViewReload", GTK_STOCK_REFRESH, N_("_Reload"), "<control>R",
-          N_("Reload the document"),
+          ACTION_TOOLTIP (N_("Reload the document")),
           G_CALLBACK (ev_window_cmd_view_reload) },
 
 	{ "ViewAutoscroll", GTK_STOCK_MEDIA_PLAY, N_("Auto_scroll"), NULL, NULL,
@@ -5028,16 +5034,16 @@ static const GtkActionEntry entries[] = {
 
         /* Go menu */
         { "GoPreviousPage", GTK_STOCK_GO_UP, N_("_Previous Page"), "<control>Page_Up",
-          N_("Go to the previous page"),
+          ACTION_TOOLTIP (N_("Go to the previous page")),
           G_CALLBACK (ev_window_cmd_go_previous_page) },
         { "GoNextPage", GTK_STOCK_GO_DOWN, N_("_Next Page"), "<control>Page_Down",
-          N_("Go to the next page"),
+          ACTION_TOOLTIP (N_("Go to the next page")),
           G_CALLBACK (ev_window_cmd_go_next_page) },
         { "GoFirstPage", GTK_STOCK_GOTO_TOP, N_("_First Page"), "<control>Home",
-          N_("Go to the first page"),
+          ACTION_TOOLTIP (N_("Go to the first page")),
           G_CALLBACK (ev_window_cmd_go_first_page) },
         { "GoLastPage", GTK_STOCK_GOTO_BOTTOM, N_("_Last Page"), "<control>End",
-          N_("Go to the last page"),
+          ACTION_TOOLTIP (N_("Go to the last page")),
           G_CALLBACK (ev_window_cmd_go_last_page) },
 
 	/* Help menu */
@@ -5049,10 +5055,10 @@ static const GtkActionEntry entries[] = {
 
 	/* Toolbar-only */
 	{ "LeaveFullscreen", GTK_STOCK_LEAVE_FULLSCREEN, N_("Leave Fullscreen"), NULL,
-	  N_("Leave fullscreen mode"),
+	  ACTION_TOOLTIP (N_("Leave fullscreen mode")),
 	  G_CALLBACK (ev_window_cmd_leave_fullscreen) },
 	{ "StartPresentation", EV_STOCK_RUN_PRESENTATION, N_("Start Presentation"), NULL,
-	  N_("Start a presentation"),
+	  ACTION_TOOLTIP (N_("Start a presentation")),
 	  G_CALLBACK (ev_window_cmd_start_presentation) },
 
 	/* Accellerators */
@@ -5108,28 +5114,28 @@ static const GtkActionEntry entries[] = {
 static const GtkToggleActionEntry toggle_entries[] = {
 	/* View Menu */
 	{ "ViewToolbar", NULL, N_("_Toolbar"), NULL,
-	  N_("Show or hide the toolbar"),
+	  ACTION_TOOLTIP (N_("Show or hide the toolbar")),
 	  G_CALLBACK (ev_window_view_toolbar_cb), TRUE },
         { "ViewSidebar", GTK_STOCK_INDEX, N_("Side _Pane"), "F9",
-	  N_("Show or hide the side pane"),
+	  ACTION_TOOLTIP (N_("Show or hide the side pane")),
 	  G_CALLBACK (ev_window_view_sidebar_cb), TRUE },
         { "ViewContinuous", EV_STOCK_VIEW_CONTINUOUS, N_("_Continuous"), NULL,
-	  N_("Show the entire document"),
+	  ACTION_TOOLTIP (N_("Show the entire document")),
 	  G_CALLBACK (ev_window_cmd_continuous), TRUE },
         { "ViewDual", EV_STOCK_VIEW_DUAL, N_("_Dual"), NULL,
-	  N_("Show two pages at once"),
+	  ACTION_TOOLTIP (N_("Show two pages at once")),
 	  G_CALLBACK (ev_window_cmd_dual), FALSE },
         { "ViewFullscreen", GTK_STOCK_FULLSCREEN, N_("_Fullscreen"), "F11",
-          N_("Expand the window to fill the screen"),
+          ACTION_TOOLTIP (N_("Expand the window to fill the screen")),
           G_CALLBACK (ev_window_cmd_view_fullscreen) },
         { "ViewPresentation", EV_STOCK_RUN_PRESENTATION, N_("Pre_sentation"), "F5",
-          N_("Run document as a presentation"),
+          ACTION_TOOLTIP (N_("Run document as a presentation")),
           G_CALLBACK (ev_window_cmd_view_presentation) },
         { "ViewBestFit", EV_STOCK_ZOOM_PAGE, N_("_Best Fit"), NULL,
-          N_("Make the current document fill the window"),
+          ACTION_TOOLTIP (N_("Make the current document fill the window")),
           G_CALLBACK (ev_window_cmd_view_best_fit) },
         { "ViewPageWidth", EV_STOCK_ZOOM_WIDTH, N_("Fit Page _Width"), NULL,
-          N_("Make the current document fill the window width"),
+          ACTION_TOOLTIP (N_("Make the current document fill the window width")),
           G_CALLBACK (ev_window_cmd_view_page_width) },
 };
 
