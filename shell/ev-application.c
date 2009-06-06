@@ -1050,6 +1050,18 @@ ev_application_init (EvApplication *ev_application)
 
         g_signal_connect (ev_application->program, "notify::is-topmost",
                           G_CALLBACK(sync_is_topmost_cb), ev_application);
+
+        /* FIXMEchpe sort of strange that maemo doesn't all of this out-of-the-box... */
+        g_object_set (gtk_settings_get_for_screen (gdk_screen_get_default ()),
+                      "gtk-alternative-button-order", TRUE,
+                      "gtk-enable-mnemonics", FALSE,
+
+                      /* We want the default of FALSE for this property, but to work
+                       * around https://bugs.maemo.org/show_bug.cgi?id=2278 we have
+                       * to set this to TRUE.
+                       */
+                      "gtk-enable-accels", TRUE,
+                      NULL);
 #endif /* PLATFORM_HILDON */
 
 #ifndef PLATFORM_HILDON
