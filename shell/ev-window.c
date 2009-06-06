@@ -43,10 +43,6 @@
 #include <gconf/gconf-client.h>
 #endif
 
-#include "egg-editable-toolbar.h"
-#include "egg-toolbar-editor.h"
-#include "egg-toolbars-model.h"
-
 #include "eggfindbar.h"
 
 #include "ephy-zoom-action.h"
@@ -100,6 +96,12 @@
 
 #ifdef PLATFORM_HILDON
 #include <hildon/hildon-file-chooser-dialog.h>
+#endif
+
+#ifndef PLATFORM_HILDON
+#include "egg-editable-toolbar.h"
+#include "egg-toolbar-editor.h"
+#include "egg-toolbars-model.h"
 #endif
 
 typedef enum {
@@ -559,9 +561,9 @@ update_chrome_visibility (EvWindow *window)
 	set_widget_visibility (priv->find_bar, findbar);
 	set_widget_visibility (priv->sidebar, sidebar);
 	
+#ifndef PLATFORM_HILDON
 	ev_window_set_action_sensitive (window, "EditToolbar", toolbar);
 
-#ifndef PLATFORM_HILDON
 	if (priv->fullscreen_toolbar != NULL) {
 		set_widget_visibility (priv->fullscreen_toolbar, fullscreen_toolbar);
 	}
@@ -3819,6 +3821,8 @@ ev_window_cmd_edit_rotate_right (GtkAction *action, EvWindow *ev_window)
 	ev_view_rotate_right (EV_VIEW (ev_window->priv->view));
 }
 
+#ifndef PLATFORM_HILDON
+
 static void
 ev_window_cmd_edit_toolbar_cb (GtkDialog *dialog, gint response, gpointer data)
 {
@@ -3862,6 +3866,8 @@ ev_window_cmd_edit_toolbar (GtkAction *action, EvWindow *ev_window)
 			  ev_window);
 	gtk_widget_show_all (dialog);
 }
+
+#endif /* !PLATFORM_HILDON */
 
 static void
 ev_window_cmd_view_zoom_in (GtkAction *action, EvWindow *ev_window)
@@ -5023,8 +5029,10 @@ static const GtkActionEntry entries[] = {
 	  G_CALLBACK (ev_window_cmd_edit_find_next) },
 	{ "EditFindPrevious", NULL, N_("Find Pre_vious"), "<shift><control>G", NULL,
 	  G_CALLBACK (ev_window_cmd_edit_find_previous) },
+#ifndef PLATFORM_HILDON
         { "EditToolbar", NULL, N_("T_oolbar"), NULL, NULL,
           G_CALLBACK (ev_window_cmd_edit_toolbar) },
+#endif
 	{ "EditRotateLeft", EV_STOCK_ROTATE_LEFT, N_("Rotate _Left"), "<control>Left", NULL,
 	  G_CALLBACK (ev_window_cmd_edit_rotate_left) },
 	{ "EditRotateRight", EV_STOCK_ROTATE_RIGHT, N_("Rotate _Right"), "<control>Right", NULL,

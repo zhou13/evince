@@ -30,7 +30,9 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
+#ifndef PLATFORM_HILDON
 #include "egg-toolbars-model.h"
+#endif
 
 #include "ev-window.h"
 
@@ -78,8 +80,11 @@ void	          ev_application_open_uri_list       (EvApplication   *application,
 GList		 *ev_application_get_windows	     (EvApplication   *application);
 GObject		 *ev_application_get_media_keys	     (EvApplication   *application);
 
+#ifndef PLATFORM_HILDON
 EggToolbarsModel *ev_application_get_toolbars_model  (EvApplication   *application);
 void              ev_application_save_toolbars_model (EvApplication   *application);
+#endif
+
 void 		  ev_application_set_filechooser_uri (EvApplication   *application,
 						      GtkFileChooserAction action,
 						      const gchar     *uri);

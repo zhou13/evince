@@ -14,6 +14,8 @@ noinst_HEADERS = \
 
 noinst_LTLIBRARIES = libtoolbareditor.la
 
+if !PLATFORM_HILDON
+
 libtoolbareditor_la_SOURCES = 	\
 	$(BUILT_SOURCES) 	\
 	$(EGGSOURCES)		\
@@ -28,6 +30,8 @@ libtoolbareditor_la_CFLAGS = \
 	$(DISABLE_DEPRECATED)			\
 	-DCURSOR_DIR=\"$(pkgdatadir)\"		\
 	$(AM_CFLAGS)
+
+endif # PLATFORM_HILDON
 
 BUILT_SOURCES = \
 	eggmarshalers.c \

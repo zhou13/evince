@@ -68,14 +68,16 @@ struct _EvApplication {
 	gchar *dot_dir;
 	gchar *data_dir;
 	gchar *accel_map_file;
-	gchar *toolbars_file;
 
 #ifdef ENABLE_DBUS
 	gchar *crashed_file;
 	guint  crashed_idle;
 #endif
 
+#ifndef PLATFORM_HILDON
 	EggToolbarsModel *toolbars_model;
+	gchar *toolbars_file;
+#endif
 
 	TotemScrsaver *scr_saver;
 
@@ -943,12 +945,14 @@ ev_application_shutdown (EvApplication *application)
 		application->accel_map_file = NULL;
 	}
 	
+#ifndef PLATFORM_HILDON
 	if (application->toolbars_model) {
 		g_object_unref (application->toolbars_model);
 		g_free (application->toolbars_file);
 		application->toolbars_model = NULL;
 		application->toolbars_file = NULL;
 	}
+#endif /* !PLATFORM_HILDON */
 
 	ev_application_save_print_settings (application);
 	
@@ -1103,8 +1107,7 @@ ev_application_init (EvApplication *ev_application)
 								   NULL);
 		gtk_accel_map_load (ev_application->accel_map_file);
 	}
-#endif /* !PLATFORM_HILDON */
-	
+
 	ev_application->toolbars_model = egg_toolbars_model_new ();
 
 	ev_application->toolbars_file = g_build_filename
@@ -1122,7 +1125,6 @@ ev_application_init (EvApplication *ev_application)
 	}
 	g_free (toolbar_path);
 
-#ifndef PLATFORM_HILDON
 	/* Open item doesn't exist anymore,
 	 * convert it to OpenRecent for compatibility
 	 */
@@ -1138,10 +1140,11 @@ ev_application_init (EvApplication *ev_application)
 			break;
 		}
 	}
-#endif /* !PLATFORM_HILDON */
 
 	egg_toolbars_model_set_flags (ev_application->toolbars_model, 0,
 				      EGG_TB_MODEL_NOT_REMOVABLE);
+
+#endif /* !PLATFORM_HILDON */
 
 #ifdef ENABLE_DBUS
 	ev_application->keys = ev_media_player_keys_new ();
@@ -1193,6 +1196,8 @@ ev_application_get_media_keys (EvApplication *application)
 #endif /* ENABLE_DBUS */
 }
 
+#ifndef PLATFORM_HILDON
+
 EggToolbarsModel *
 ev_application_get_toolbars_model (EvApplication *application)
 {
@@ -1205,6 +1210,8 @@ ev_application_save_toolbars_model (EvApplication *application)
         egg_toolbars_model_save_toolbars (application->toolbars_model,
 			 	          application->toolbars_file, "1.0");
 }
+
+#endif /* !PLATFORM_HILDON */
 
 void
 ev_application_set_filechooser_uri (EvApplication       *application,
