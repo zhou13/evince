@@ -300,7 +300,9 @@ egg_find_bar_init (EggFindBar *find_bar)
   GtkWidget *alignment;
   GtkWidget *box;
   GtkToolItem *item;
+#ifndef PLATFORM_HILDON
   GtkWidget *arrow;
+#endif
 
   /* Data */
   priv = EGG_FIND_BAR_GET_PRIVATE (find_bar);
@@ -308,7 +310,11 @@ egg_find_bar_init (EggFindBar *find_bar)
   find_bar->priv = priv;  
   priv->search_string = NULL;
 
+#ifdef PLATFORM_HILDON
+  gtk_toolbar_set_style (GTK_TOOLBAR (find_bar), GTK_TOOLBAR_ICONS);
+#else
   gtk_toolbar_set_style (GTK_TOOLBAR (find_bar), GTK_TOOLBAR_BOTH_HORIZ);
+#endif
 
   /* Find: |_____| */
   item = gtk_tool_item_new ();
@@ -325,16 +331,24 @@ egg_find_bar_init (EggFindBar *find_bar)
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), priv->find_entry);
 
   /* Prev */
+#ifdef PLATFORM_HILDON
+  priv->previous_button = gtk_tool_button_new_from_stock (GTK_STOCK_GO_BACK);
+#else
   arrow = gtk_arrow_new (GTK_ARROW_LEFT, GTK_SHADOW_NONE);
   priv->previous_button = gtk_tool_button_new (arrow, Q_("Find Pre_vious"));
+#endif
   gtk_tool_button_set_use_underline (GTK_TOOL_BUTTON (priv->previous_button), TRUE);
   gtk_tool_item_set_is_important (priv->previous_button, TRUE);
   gtk_widget_set_tooltip_text (GTK_WIDGET (priv->previous_button),
 			       _("Find previous occurrence of the search string"));
 
   /* Next */
+#ifdef PLATFORM_HILDON
+  priv->next_button = gtk_tool_button_new_from_stock (GTK_STOCK_GO_FORWARD);
+#else
   arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_NONE);
   priv->next_button = gtk_tool_button_new (arrow, Q_("Find Ne_xt"));
+#endif
   gtk_tool_button_set_use_underline (GTK_TOOL_BUTTON (priv->next_button), TRUE);
   gtk_tool_item_set_is_important (priv->next_button, TRUE);
   gtk_widget_set_tooltip_text (GTK_WIDGET (priv->next_button),

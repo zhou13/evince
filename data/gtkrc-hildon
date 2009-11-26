@@ -11,6 +11,9 @@ style "evince-icons" {
   stock["gtk-goto-top"]    = { { @"pdf_viewer_first_page", LTR }, { @"pdf_viewer_last_page",  RTL } }
   stock["gtk-goto-bottom"] = { { @"pdf_viewer_last_page",  LTR }, { @"pdf_viewer_first_page", RTL } }
   
+  stock["gtk-go-back"]    = { { @"general_back",    LTR }, { @"general_forward", RTL } }
+  stock["gtk-go-forward"] = { { @"general_forward", LTR }, { @"general_back",    RTL } }
+
   stock["gtk-go-up"]   = { { @"general_back",    LTR }, { @"general_forward", RTL } }
   stock["gtk-go-down"] = { { @"general_forward", LTR }, { @"general_back",    RTL } }
 
