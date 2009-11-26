@@ -449,6 +449,20 @@ main (int argc, char *argv[])
 
 	g_option_context_add_group (context, gtk_get_option_group (TRUE));
 
+#ifdef PLATFORM_HILDON
+  {
+    char *rc_file;
+
+    /* Note: we have to use gtk_rc_add_default_file() before calling gtk_init() (via
+     * g_option_context_parse()) rather than parsing the file directly afterward, in
+     * order to get priority over the theme.
+     */
+    rc_file = g_build_filename (DATADIR, "gtkrc-hildon", NULL);
+    gtk_rc_add_default_file (rc_file);
+    g_free (rc_file);
+  }
+#endif /* PLATFORM_HILDON */
+
 	if (!g_option_context_parse (context, &argc, &argv, &error)) {
 		g_printerr ("Cannot parse arguments: %s", error->message);
 		g_error_free (error);

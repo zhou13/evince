@@ -1,0 +1,24 @@
+# Re-define the icons used in the toolbar
+# These icons a) look nicer, and b) are available in the required
+# sizes, so that the toolbar icons aren't blurry (cf. bug #584669).
+
+style "evince-icons" {
+  stock["gtk-open"] = { { @"general_folder" } }
+
+  stock["gtk-close"] = { { @"general_close" } }
+  stock["close"]     = { { @"general_close" } }
+
+  stock["gtk-goto-top"]    = { { @"pdf_viewer_first_page", LTR }, { @"pdf_viewer_last_page",  RTL } }
+  stock["gtk-goto-bottom"] = { { @"pdf_viewer_last_page",  LTR }, { @"pdf_viewer_first_page", RTL } }
+  
+  stock["gtk-go-up"]   = { { @"general_back",    LTR }, { @"general_forward", RTL } }
+  stock["gtk-go-down"] = { { @"general_forward", LTR }, { @"general_back",    RTL } }
+
+  stock["gtk-undo"] = { { @"general_undo", LTR }, { @"general_redo", RTL } }
+  stock["gtk-redo"] = { { @"general_redo", LTR }, { @"general_undo", RTL } }
+
+  stock["gtk-fullscreen"]       = { { @"general_fullsize" } }
+  stock["gtk-leave-fullscreen"] = { { @"general_fullsize" } }
+}
+
+class "GtkWidget" style "evince-icons"

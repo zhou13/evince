@@ -30,6 +30,13 @@ if ENABLE_PREVIEWER
 ui_DATA += evince-previewer-ui.xml
 endif
 
+# GtkRC file
+
+if PLATFORM_HILDON
+rcdir = $(pkgdatadir)
+dist_rc_DATA = gtkrc-hildon
+endif
+
 #
 # Desktop file
 #
