@@ -28,6 +28,7 @@
 #ifdef PLATFORM_HILDON
 #include <hildon/hildon-gtk.h>
 #include <hildon/hildon-pannable-area.h>
+#include <hildon/hildon-stackable-window.h>
 #endif
 
 #include "ev-document-fonts.h"
@@ -37,7 +38,11 @@
 #include "ev-properties-view.h"
 
 struct _EvPropertiesDialog {
+#ifndef PLATFORM_HILDON
 	GtkDialog base_instance;
+#else
+        HildonStackableWindow base_instance;
+#endif
 
 	EvDocument *document;
 	GtkWidget *notebook;
@@ -46,10 +51,18 @@ struct _EvPropertiesDialog {
 };
 
 struct _EvPropertiesDialogClass {
+#ifndef PLATFORM_HILDON
 	GtkDialogClass base_class;
+#else
+        HildonStackableWindowClass base_class;
+#endif
 };
 
+#ifndef PLATFORM_HILDON
 G_DEFINE_TYPE (EvPropertiesDialog, ev_properties_dialog, GTK_TYPE_DIALOG)
+#else
+G_DEFINE_TYPE (EvPropertiesDialog, ev_properties_dialog, HILDON_TYPE_STACKABLE_WINDOW)
+#endif
 
 static void
 ev_properties_dialog_class_init (EvPropertiesDialogClass *properties_class)
@@ -61,7 +74,9 @@ ev_properties_dialog_init (EvPropertiesDialog *properties)
 {
 	gtk_window_set_title (GTK_WINDOW (properties), _("Properties"));
 	gtk_window_set_destroy_with_parent (GTK_WINDOW (properties), TRUE);
-	gtk_dialog_set_has_separator (GTK_DIALOG (properties), FALSE);
+
+#ifndef PLATFORM_HILDON
+        gtk_dialog_set_has_separator (GTK_DIALOG (properties), FALSE);
 	gtk_container_set_border_width (GTK_CONTAINER (properties), 5);
 	gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (properties)->vbox), 2);
 
@@ -69,11 +84,20 @@ ev_properties_dialog_init (EvPropertiesDialog *properties)
 			       GTK_RESPONSE_CANCEL);
 	gtk_dialog_set_default_response (GTK_DIALOG (properties), 
 			                 GTK_RESPONSE_CANCEL);
+#else
+
+#endif /* !PLATFORM_HILDON */
 
 	properties->notebook = gtk_notebook_new ();
+
+#ifndef PLATFORM_HILDON
 	gtk_container_set_border_width (GTK_CONTAINER (properties->notebook), 5);
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (properties)->vbox),
 			    properties->notebook, TRUE, TRUE, 0);
+#else
+        gtk_container_add (GTK_CONTAINER (properties), properties->notebook);
+#endif /* !PLATFORM_HILDON */
+
 	gtk_widget_show (properties->notebook);
 
 	g_signal_connect (properties, "response",
