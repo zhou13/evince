@@ -992,15 +992,8 @@ ev_view_presentation_draw_end_page (EvViewPresentation *pview,
 	area.width = allocation.width;
 	area.height = allocation.height;
 
-        gtk_paint_layout (gtk_widget_get_style (widget),
-                          cr,
-                          gtk_widget_get_state (widget),
-                          FALSE,
-                          widget,
-                          NULL,
-                          15,
-                          15,
-                          layout);
+        gtk_render_layout (gtk_widget_get_style_context (widget),
+                           cr, 15, 15, layout);
 
 	pango_font_description_free (font_desc);
 	g_object_unref (layout);

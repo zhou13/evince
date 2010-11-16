@@ -4290,13 +4290,11 @@ focus_annotation (EvView       *view,
 
 	doc_rect_to_view_rect (view, page, &mapping->area, &rect);
 
-        gtk_paint_focus (gtk_widget_get_style (widget),
-                         cr,
-                         gtk_widget_get_state (widget),
-                         widget, NULL,
-                         rect.x - view->scroll_x,
-                         rect.y - view->scroll_y,
-                         rect.width + 1, rect.height + 1);
+        gtk_render_focus (gtk_widget_get_style_context (widget),
+                          cr,
+                          rect.x - view->scroll_x,
+                          rect.y - view->scroll_y,
+                          rect.width + 1, rect.height + 1);
 }
 
 static void
