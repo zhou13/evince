@@ -2659,6 +2659,15 @@ ev_annot_from_poppler_annot (PopplerAnnot *poppler_annot,
 	const gchar  *unimplemented_annot = NULL;
 
 	switch (poppler_annot_get_annot_type (poppler_annot)) {
+		case POPPLER_ANNOT_HIGHLIGHT:
+		case POPPLER_ANNOT_UNDERLINE:
+		case POPPLER_ANNOT_SQUIGGLY:
+		case POPPLER_ANNOT_STRIKE_OUT:
+		{
+
+			ev_annot = ev_annotation_text_markup_new (page);
+		}		
+			break;
 	        case POPPLER_ANNOT_TEXT: {
 			PopplerAnnotText *poppler_text;
 			EvAnnotationText *ev_annot_text;
