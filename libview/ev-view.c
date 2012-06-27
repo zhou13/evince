@@ -207,9 +207,6 @@ static void       draw_one_page                              (EvView            
 							      gboolean		 *page_ready);
 static void       show_loading_window                        (EvView             *view);
 static void       hide_loading_window                        (EvView             *view);
-static void       ev_view_reload_page                        (EvView             *view,
-							      gint                page,
-							      cairo_region_t     *region);
 static void       ev_view_loading_window_move                (EvView             *view);
 
 /*** Callbacks ***/
@@ -5418,7 +5415,7 @@ ev_view_set_model (EvView          *view,
 			  view);
 }
 
-static void
+void
 ev_view_reload_page (EvView         *view,
 		     gint            page,
 		     cairo_region_t *region)
