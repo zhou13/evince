@@ -292,7 +292,7 @@ static const gchar *document_print_settings[] = {
 	GTK_PRINT_SETTINGS_OUTPUT_URI
 };
 
-static void	ev_window_update_actions	 	(EvWindow         *ev_window);
+static void	ev_window_update_actions_sensitivity    (EvWindow         *ev_window);
 static void     ev_window_sidebar_visibility_changed_cb (EvSidebar        *ev_sidebar,
 							 GParamSpec       *pspec,
 							 EvWindow         *ev_window);
@@ -486,11 +486,11 @@ ev_window_setup_action_sensitivity (EvWindow *ev_window)
 	ev_window_set_action_sensitive (ev_window, ZOOM_CONTROL_ACTION,  has_pages);
 	ev_window_set_action_sensitive (ev_window, NAVIGATION_ACTION,  FALSE);
 
-        ev_window_update_actions (ev_window);
+        ev_window_update_actions_sensitivity (ev_window);
 }
 
 static void
-ev_window_update_actions (EvWindow *ev_window)
+ev_window_update_actions_sensitivity (EvWindow *ev_window)
 {
 	EvView *view = EV_VIEW (ev_window->priv->view);
 	int n_pages = 0, page = -1;
@@ -948,7 +948,7 @@ ev_window_page_changed_cb (EvWindow        *ev_window,
 			   gint             new_page,
 			   EvDocumentModel *model)
 {
-	ev_window_update_actions (ev_window);
+	ev_window_update_actions_sensitivity (ev_window);
 
 	ev_window_update_find_status_message (ev_window);
 
@@ -3855,7 +3855,7 @@ ev_window_cmd_view_best_fit (GtkAction *action, EvWindow *ev_window)
 	} else {
 		ev_document_model_set_sizing_mode (ev_window->priv->model, EV_SIZING_FREE);
 	}
-	ev_window_update_actions (ev_window);
+	ev_window_update_actions_sensitivity (ev_window);
 }
 
 static void
@@ -3874,7 +3874,7 @@ ev_window_cmd_view_page_width (GtkAction *action, EvWindow *ev_window)
 	} else {
 		ev_document_model_set_sizing_mode (ev_window->priv->model, EV_SIZING_FREE);
 	}
-	ev_window_update_actions (ev_window);
+	ev_window_update_actions_sensitivity (ev_window);
 }
 
 static void
@@ -4457,7 +4457,7 @@ ev_window_set_page_mode (EvWindow         *window,
 		gtk_container_add (GTK_CONTAINER (window->priv->scrolled_window),
 				   child);
 	}
-	ev_window_update_actions (window);
+	ev_window_update_actions_sensitivity (window);
 }
 
 
@@ -4808,7 +4808,7 @@ ev_window_sizing_mode_changed_cb (EvDocumentModel *model,
 static void
 ev_window_zoom_changed_cb (EvDocumentModel *model, GParamSpec *pspec, EvWindow *ev_window)
 {
-        ev_window_update_actions (ev_window);
+        ev_window_update_actions_sensitivity (ev_window);
 
 	if (!ev_window->priv->metadata)
 		return;
@@ -5315,7 +5315,7 @@ ev_window_find_job_updated_cb (EvJobFind *job,
 			       gint       page,
 			       EvWindow  *ev_window)
 {
-	ev_window_update_actions (ev_window);
+	ev_window_update_actions_sensitivity (ev_window);
 	ev_window_update_find_status_message (ev_window);
 }
 
@@ -5395,7 +5395,7 @@ ev_window_search_start (EvWindow *ev_window)
 				  ev_window);
 		ev_job_scheduler_push_job (ev_window->priv->find_job, EV_JOB_PRIORITY_NONE);
 	} else {
-		ev_window_update_actions (ev_window);
+		ev_window_update_actions_sensitivity (ev_window);
 		egg_find_bar_set_status_text (find_bar, NULL);
 		gtk_widget_queue_draw (GTK_WIDGET (ev_window->priv->view));
 	}
@@ -5423,7 +5423,7 @@ find_bar_visibility_changed_cb (EggFindBar *find_bar,
 	if (ev_window->priv->document &&
 	    EV_IS_DOCUMENT_FIND (ev_window->priv->document)) {
 		ev_view_find_set_highlight_search (EV_VIEW (ev_window->priv->view), visible);
-		ev_window_update_actions (ev_window);
+		ev_window_update_actions_sensitivity (ev_window);
 
 		if (visible)
 			ev_window_search_start (ev_window);
