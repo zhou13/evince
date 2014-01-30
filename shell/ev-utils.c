@@ -22,6 +22,7 @@
 
 #include "ev-utils.h"
 #include "ev-file-helpers.h"
+#include "ev-application.h"
 
 #include <string.h>
 #include <math.h>
@@ -390,4 +391,92 @@ get_gdk_pixbuf_format_by_extension (const gchar *uri)
 
 	g_slist_free (pixbuf_formats);
 	return NULL;
+}
+
+static const gchar *
+get_settings_key_for_directory (GUserDirectory directory)
+{
+	switch (directory) {
+		case G_USER_DIRECTORY_PICTURES:
+			return  "pictures-directory";
+		case G_USER_DIRECTORY_DOCUMENTS:
+		default:
+			return  "document-directory";
+	}
+}
+
+/**
+ * ev_file_chooser_save_folder:
+ * @file_chooser: a #GtkFileChooser
+ * @uri: (allow-none): optional fallback path
+ * @directory: the #GUserDirectory from which to restore
+ *
+ * Saves the directory of @file_chooser for @directory. Use
+ * ev_file_chooser_restore_folder() to restore this folder in a
+ * different file chooser.
+ */
+void
+ev_file_chooser_save_folder (GtkFileChooser *file_chooser,
+			     GUserDirectory  directory)
+{
+	gchar *uri, *folder;
+
+	folder = gtk_file_chooser_get_current_folder (file_chooser);
+	if (g_strcmp0 (folder, g_get_user_special_dir (directory)) == 0) {
+		/* Store 'nothing' if the folder is the default one */
+		uri = NULL;
+	} else {
+		uri = gtk_file_chooser_get_current_folder_uri (file_chooser);
+	}
+	g_free (folder);
+
+	g_settings_set (ev_application_get_settings (EV_APP),
+			get_settings_key_for_directory (directory),
+			"ms", uri);
+	g_free (uri);
+}
+
+/**
+ * ev_file_chooser_restore_folder:
+ * @file_chooser: a #GtkFileChooser
+ * @uri: (allow-none): optional fallback path
+ * @directory: the #GUserDirectory from which to restore
+ *
+ * Sets the folder of @file_chooser to the last-visited directory for
+ * the given @directory type.
+ */
+void
+ev_file_chooser_restore_folder (GtkFileChooser *file_chooser,
+				const gchar    *uri,
+				GUserDirectory  directory)
+{
+	const gchar *dir;
+	gchar *folder_uri;
+	gchar *parent_uri = NULL;
+
+	g_settings_get (ev_application_get_settings (EV_APP),
+			get_settings_key_for_directory (directory),
+			"ms", &folder_uri);
+	if (folder_uri == NULL && uri != NULL) {
+		GFile *file, *parent;
+
+		file = g_file_new_for_uri (uri);
+		parent = g_file_get_parent (file);
+		g_object_unref (file);
+		if (parent) {
+			folder_uri = parent_uri = g_file_get_uri (parent);
+			g_object_unref (parent);
+		}
+	}
+
+	if (folder_uri) {
+		gtk_file_chooser_set_current_folder_uri (file_chooser, folder_uri);
+	} else {
+		dir = g_get_user_special_dir (directory);
+		gtk_file_chooser_set_current_folder (file_chooser,
+						     dir ? dir : g_get_home_dir ());
+	}
+
+	g_free (folder_uri);
+	g_free (parent_uri);
 }

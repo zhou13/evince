@@ -42,6 +42,13 @@ gint 			get_num_monitors (GtkWindow * window);
 void           		file_chooser_dialog_add_writable_pixbuf_formats (GtkFileChooser *chooser);
 GdkPixbufFormat* 	get_gdk_pixbuf_format_by_extension (const gchar *uri);
 
+void			ev_file_chooser_save_folder (GtkFileChooser *file_chooser,
+						     GUserDirectory  directory);
+
+void			ev_file_chooser_restore_folder (GtkFileChooser *file_chooser,
+							const gchar    *uri,
+							GUserDirectory  directory);
+
 G_END_DECLS
 
 #endif /* __EV_VIEW_H__ */

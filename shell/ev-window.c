@@ -262,8 +262,6 @@ struct _EvWindowPrivate {
 #define GS_OVERRIDE_RESTRICTIONS "override-restrictions"
 #define GS_PAGE_CACHE_SIZE       "page-cache-size"
 #define GS_AUTO_RELOAD           "auto-reload"
-#define GS_LAST_DOCUMENT_DIRECTORY "document-directory"
-#define GS_LAST_PICTURES_DIRECTORY "pictures-directory"
 
 #define SIDEBAR_DEFAULT_SIZE    132
 #define LINKS_SIDEBAR_ID "links"
@@ -420,6 +418,7 @@ ev_window_setup_action_sensitivity (EvWindow *ev_window)
 	gboolean can_get_text = FALSE;
 	gboolean has_pages = FALSE;
 	gboolean can_find = FALSE;
+	GSettings *settings = ev_application_get_settings (EV_APP);
 
 	if (document) {
 		has_document = TRUE;
@@ -439,10 +438,8 @@ ev_window_setup_action_sensitivity (EvWindow *ev_window)
 		can_find = TRUE;
 	}
 
-	if (has_document && ev_window->priv->settings) {
-		override_restrictions =
-			g_settings_get_boolean (ev_window->priv->settings,
-						GS_OVERRIDE_RESTRICTIONS);
+	if (has_document && settings) {
+		override_restrictions = g_settings_get_boolean (settings, GS_OVERRIDE_RESTRICTIONS);
 	}
 
 	if (!override_restrictions && info && info->fields_mask & EV_DOCUMENT_INFO_PERMISSIONS) {
@@ -1544,8 +1541,9 @@ static void
 ev_window_document_changed (EvWindow *ev_window,
 			    gpointer  user_data)
 {
-	if (ev_window->priv->settings &&
-	    g_settings_get_boolean (ev_window->priv->settings, GS_AUTO_RELOAD))
+	GSettings *settings = ev_application_get_settings (EV_APP);
+
+	if (settings && g_settings_get_boolean (settings, GS_AUTO_RELOAD))
 		ev_window_reload_document (ev_window, NULL);
 }
 
@@ -2391,124 +2389,10 @@ ev_window_reload_document (EvWindow *ev_window,
 	}
 }
 
-static const gchar *
-get_settings_key_for_directory (GUserDirectory directory)
-{
-        switch (directory) {
-                case G_USER_DIRECTORY_PICTURES:
-                        return GS_LAST_PICTURES_DIRECTORY;
-                case G_USER_DIRECTORY_DOCUMENTS:
-                default:
-                        return GS_LAST_DOCUMENT_DIRECTORY;
-        }
-}
-
-static void
-ev_window_file_chooser_restore_folder (EvWindow       *window,
-                                       GtkFileChooser *file_chooser,
-                                       const gchar    *uri,
-                                       GUserDirectory  directory)
-{
-        const gchar *folder_uri, *dir;
-        gchar *parent_uri = NULL;
-
-        g_settings_get (ev_application_get_settings (EV_APP),
-                        get_settings_key_for_directory (directory),
-                        "m&s", &folder_uri);
-        if (folder_uri == NULL && uri != NULL) {
-                GFile *file, *parent;
-
-                file = g_file_new_for_uri (uri);
-                parent = g_file_get_parent (file);
-                g_object_unref (file);
-                if (parent) {
-                        folder_uri = parent_uri = g_file_get_uri (parent);
-                        g_object_unref (parent);
-                }
-        }
-
-        if (folder_uri) {
-                gtk_file_chooser_set_current_folder_uri (file_chooser, folder_uri);
-        } else {
-                dir = g_get_user_special_dir (directory);
-                gtk_file_chooser_set_current_folder (file_chooser,
-                                                     dir ? dir : g_get_home_dir ());
-        }
-
-        g_free (parent_uri);
-}
-
-static void
-ev_window_file_chooser_save_folder (EvWindow       *window,
-                                    GtkFileChooser *file_chooser,
-                                    GUserDirectory  directory)
-{
-        gchar *uri, *folder;
-
-        folder = gtk_file_chooser_get_current_folder (file_chooser);
-        if (g_strcmp0 (folder, g_get_user_special_dir (directory)) == 0) {
-                /* Store 'nothing' if the folder is the default one */
-                uri = NULL;
-        } else {
-                uri = gtk_file_chooser_get_current_folder_uri (file_chooser);
-        }
-        g_free (folder);
-
-        g_settings_set (ev_application_get_settings (EV_APP),
-                        get_settings_key_for_directory (directory),
-                        "ms", uri);
-        g_free (uri);
-}
-
-static void
-file_open_dialog_response_cb (GtkWidget *chooser,
-			      gint       response_id,
-			      EvWindow  *ev_window)
-{
-	if (response_id == GTK_RESPONSE_OK) {
-		GSList *uris;
-
-                ev_window_file_chooser_save_folder (ev_window, GTK_FILE_CHOOSER (chooser),
-                                                    G_USER_DIRECTORY_DOCUMENTS);
-
-		uris = gtk_file_chooser_get_uris (GTK_FILE_CHOOSER (chooser));
-
-		ev_application_open_uri_list (EV_APP, uris,
-					      gtk_window_get_screen (GTK_WINDOW (ev_window)),
-					      gtk_get_current_event_time ());
-
-		g_slist_foreach (uris, (GFunc)g_free, NULL);
-		g_slist_free (uris);
-	}
-
-	gtk_widget_destroy (chooser);
-}
-
 static void
 ev_window_cmd_file_open (GtkAction *action, EvWindow *window)
 {
-	GtkWidget   *chooser;
-
-	chooser = gtk_file_chooser_dialog_new (_("Open Document"),
-					       GTK_WINDOW (window),
-					       GTK_FILE_CHOOSER_ACTION_OPEN,
-					       GTK_STOCK_CANCEL,
-					       GTK_RESPONSE_CANCEL,
-					       GTK_STOCK_OPEN, GTK_RESPONSE_OK,
-					       NULL);
-
-	ev_document_factory_add_filters (chooser, NULL);
-	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (chooser), TRUE);
-	gtk_file_chooser_set_local_only (GTK_FILE_CHOOSER (chooser), FALSE);
-
-        ev_window_file_chooser_restore_folder (window, GTK_FILE_CHOOSER (chooser),
-                                               NULL, G_USER_DIRECTORY_DOCUMENTS);
-
-	g_signal_connect (chooser, "response",
-			  G_CALLBACK (file_open_dialog_response_cb),
-			  window);
-
-	gtk_widget_show (chooser);
+	ev_application_open (EV_APP);
 }
 
 static void
@@ -2933,8 +2817,8 @@ file_save_dialog_response_cb (GtkWidget *fc,
 		return;
 	}
 
-        ev_window_file_chooser_save_folder (ev_window, GTK_FILE_CHOOSER (fc),
-                                            G_USER_DIRECTORY_DOCUMENTS);
+	ev_file_chooser_save_folder (GTK_FILE_CHOOSER (fc),
+				     G_USER_DIRECTORY_DOCUMENTS);
 
 	uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (fc));
 
@@ -2984,9 +2868,9 @@ ev_window_cmd_save_as (GtkAction *action, EvWindow *ev_window)
 	g_object_unref (file);
 	g_free (base_name);
 
-        ev_window_file_chooser_restore_folder (ev_window, GTK_FILE_CHOOSER (fc),
-                                               ev_window->priv->uri,
-                                               G_USER_DIRECTORY_DOCUMENTS);
+	ev_file_chooser_restore_folder (GTK_FILE_CHOOSER (fc),
+					ev_window->priv->uri,
+					G_USER_DIRECTORY_DOCUMENTS);
 
 	g_signal_connect (fc, "response",
 			  G_CALLBACK (file_save_dialog_response_cb),
@@ -5002,96 +4886,10 @@ ev_window_dual_mode_odd_pages_left_changed_cb (EvDocumentModel *model,
 					 ev_document_model_get_dual_page_odd_pages_left (model));
 }
 
-static char *
-build_comments_string (EvDocument *document)
-{
-	gchar *comments = NULL;
-	EvDocumentBackendInfo info;
-
-	if (document && ev_document_get_backend_info (document, &info)) {
-		comments = g_strdup_printf (
-			_("Document Viewer\nUsing %s (%s)"),
-			info.name, info.version);
-	} else {
-		comments = g_strdup_printf (
-			_("Document Viewer"));
-	}
-
-	return comments;
-}
-
 static void
 ev_window_cmd_help_about (GtkAction *action, EvWindow *ev_window)
 {
-	const char *authors[] = {
-		"Martin Kretzschmar <m_kretzschmar@gmx.net>",
-		"Jonathan Blandford <jrb@gnome.org>",
-		"Marco Pesenti Gritti <marco@gnome.org>",
-		"Nickolay V. Shmyrev <nshmyrev@yandex.ru>",
-		"Bryan Clark <clarkbw@gnome.org>",
-		"Carlos Garcia Campos <carlosgc@gnome.org>",
-		"Wouter Bolsterlee <wbolster@gnome.org>",
-                "Christian Persch <chpe" "\100" "gnome.org>",
-		NULL
-	};
-
-	const char *documenters[] = {
-		"Nickolay V. Shmyrev <nshmyrev@yandex.ru>",
-		"Phil Bull <philbull@gmail.com>",
-		"Tiffany Antpolski <tiffany.antopolski@gmail.com>",
-		NULL
-	};
-
-	const char *license[] = {
-		N_("Evince is free software; you can redistribute it and/or modify "
-		   "it under the terms of the GNU General Public License as published by "
-		   "the Free Software Foundation; either version 2 of the License, or "
-		   "(at your option) any later version.\n"),
-		N_("Evince is distributed in the hope that it will be useful, "
-		   "but WITHOUT ANY WARRANTY; without even the implied warranty of "
-		   "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the "
-		   "GNU General Public License for more details.\n"),
-		N_("You should have received a copy of the GNU General Public License "
-		   "along with Evince; if not, write to the Free Software Foundation, Inc., "
-		   "51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA\n")
-	};
-
-	char *license_trans;
-	char *comments;
-
-#ifdef ENABLE_NLS
-	const char **p;
-
-	for (p = authors; *p; ++p)
-		*p = _(*p);
-
-	for (p = documenters; *p; ++p)
-		*p = _(*p);
-#endif
-
-	license_trans = g_strconcat (_(license[0]), "\n", _(license[1]), "\n",
-				     _(license[2]), "\n", NULL);
-
-	comments = build_comments_string (ev_window->priv->document);
-
-	gtk_show_about_dialog (
-		GTK_WINDOW (ev_window),
-		"name", _("Evince"),
-		"version", VERSION,
-		"copyright",
-		_("© 1996–2012 The Evince authors"),
-		"license", license_trans,
-		"website", "http://www.gnome.org/projects/evince",
-		"comments", comments,
-		"authors", authors,
-		"documenters", documenters,
-		"translator-credits", _("translator-credits"),
-		"logo-icon-name", "evince",
-		"wrap-license", TRUE,
-		NULL);
-
-	g_free (comments);
-	g_free (license_trans);
+	ev_application_show_about (EV_APP);
 }
 
 static void
@@ -5815,11 +5613,6 @@ ev_window_dispose (GObject *object)
 						      ev_window_setup_recent,
 						      window);
 		priv->recent_manager = NULL;
-	}
-
-	if (priv->settings) {
-		g_object_unref (priv->settings);
-		priv->settings = NULL;
 	}
 
 	if (priv->default_settings) {
@@ -6777,8 +6570,8 @@ image_save_dialog_response_cb (GtkWidget *fc,
 		return;
 	}
 
-	ev_window_file_chooser_save_folder (ev_window, GTK_FILE_CHOOSER (fc),
-                                            G_USER_DIRECTORY_PICTURES);
+	ev_file_chooser_save_folder (GTK_FILE_CHOOSER (fc),
+				     G_USER_DIRECTORY_PICTURES);
 
 	uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (fc));
 	filter = gtk_file_chooser_get_filter (GTK_FILE_CHOOSER (fc));
@@ -6882,9 +6675,9 @@ ev_view_popup_cmd_save_image_as (GtkAction *action, EvWindow *window)
 	gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (fc), TRUE);
 	
 	file_chooser_dialog_add_writable_pixbuf_formats	(GTK_FILE_CHOOSER (fc));
-	
-        ev_window_file_chooser_restore_folder (window, GTK_FILE_CHOOSER (fc), NULL,
-                                               G_USER_DIRECTORY_PICTURES);
+
+	ev_file_chooser_restore_folder (GTK_FILE_CHOOSER (fc), NULL,
+					G_USER_DIRECTORY_PICTURES);
 
 	g_signal_connect (fc, "response",
 			  G_CALLBACK (image_save_dialog_response_cb),
@@ -7018,8 +6811,8 @@ attachment_save_dialog_response_cb (GtkWidget *fc,
 		return;
 	}
 
-	ev_window_file_chooser_save_folder (ev_window, GTK_FILE_CHOOSER (fc),
-                                            G_USER_DIRECTORY_DOCUMENTS);
+	ev_file_chooser_save_folder (GTK_FILE_CHOOSER (fc),
+				     G_USER_DIRECTORY_DOCUMENTS);
 
 	uri = gtk_file_chooser_get_uri (GTK_FILE_CHOOSER (fc));
 	target_file = g_file_new_for_uri (uri);
@@ -7117,8 +6910,8 @@ ev_attachment_popup_cmd_save_attachment_as (GtkAction *action, EvWindow *window)
 		gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (fc),
 						   ev_attachment_get_name (attachment));
 
-        ev_window_file_chooser_restore_folder (window, GTK_FILE_CHOOSER (fc), NULL,
-                                               G_USER_DIRECTORY_DOCUMENTS);
+	ev_file_chooser_restore_folder (GTK_FILE_CHOOSER (fc), NULL,
+					G_USER_DIRECTORY_DOCUMENTS);
 
 	g_signal_connect (fc, "response",
 			  G_CALLBACK (attachment_save_dialog_response_cb),

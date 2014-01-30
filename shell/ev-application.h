@@ -76,6 +76,10 @@ void              ev_application_show_help           (EvApplication   *applicati
                                                       GdkScreen       *screen,
                                                       const char      *topic);
 
+void              ev_application_show_about          (EvApplication *application);
+
+void              ev_application_open                (EvApplication   *application);
+
 GSettings *       ev_application_get_settings        (EvApplication   *application);
 
 G_END_DECLS

@@ -42,6 +42,8 @@
 #include "ev-application.h"
 #include "ev-file-helpers.h"
 #include "ev-stock-icons.h"
+#include "ev-utils.h"
+#include "ev-document-factory.h"
 
 #ifdef ENABLE_DBUS
 #include "ev-gdbus-generated.h"
@@ -1012,6 +1014,26 @@ app_help_cb (GSimpleAction *action,
 }
 
 static void
+app_about_cb (GSimpleAction *action,
+              GVariant      *parameter,
+              gpointer       user_data)
+{
+        EvApplication *application = user_data;
+
+        ev_application_show_about (application);
+}
+
+static void
+app_open_cb (GSimpleAction *action,
+              GVariant      *parameter,
+              gpointer       user_data)
+{
+        EvApplication *application = user_data;
+
+        ev_application_open (application);
+}
+
+static void
 ev_application_dispose (GObject *object)
 {
 	EvApplication *app = EV_APPLICATION (object);
@@ -1025,6 +1047,8 @@ static void
 ev_application_startup (GApplication *gapplication)
 {
         const GActionEntry app_menu_actions[] = {
+                { "open", app_open_cb, NULL, NULL, NULL },
+                { "about", app_about_cb, NULL, NULL, NULL },
                 { "help", app_help_cb, NULL, NULL, NULL },
         };
 
@@ -1272,6 +1296,143 @@ ev_application_show_help (EvApplication *application,
 
         gtk_show_uri (screen, uri, gtk_get_current_event_time (), NULL);
         g_free (uri);
+}
+
+/**
+ * ev_application_show_about:
+ * @application: an #EvApplication
+ *
+ * Shows an about dialog for @application with the most recently
+ * focussed window as transient parent.
+ */
+void
+ev_application_show_about (EvApplication *application)
+{
+        const char *authors[] = {
+                "Martin Kretzschmar <m_kretzschmar@gmx.net>",
+                "Jonathan Blandford <jrb@gnome.org>",
+                "Marco Pesenti Gritti <marco@gnome.org>",
+                "Nickolay V. Shmyrev <nshmyrev@yandex.ru>",
+                "Bryan Clark <clarkbw@gnome.org>",
+                "Carlos Garcia Campos <carlosgc@gnome.org>",
+                "Wouter Bolsterlee <wbolster@gnome.org>",
+                "Christian Persch <chpe" "\100" "gnome.org>",
+                NULL
+        };
+
+        const char *documenters[] = {
+                "Nickolay V. Shmyrev <nshmyrev@yandex.ru>",
+                "Phil Bull <philbull@gmail.com>",
+                "Tiffany Antpolski <tiffany.antopolski@gmail.com>",
+                NULL
+        };
+
+        const char *license[] = {
+                N_("Evince is free software; you can redistribute it and/or modify "
+                   "it under the terms of the GNU General Public License as published by "
+                   "the Free Software Foundation; either version 2 of the License, or "
+                   "(at your option) any later version.\n"),
+                N_("Evince is distributed in the hope that it will be useful, "
+                   "but WITHOUT ANY WARRANTY; without even the implied warranty of "
+                   "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the "
+                   "GNU General Public License for more details.\n"),
+                N_("You should have received a copy of the GNU General Public License "
+                   "along with Evince; if not, write to the Free Software Foundation, Inc., "
+                   "51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA\n")
+        };
+
+        char *license_trans;
+
+#ifdef ENABLE_NLS
+        const char **p;
+
+        for (p = authors; *p; ++p)
+                *p = _(*p);
+
+        for (p = documenters; *p; ++p)
+                *p = _(*p);
+#endif
+
+        license_trans = g_strconcat (_(license[0]), "\n", _(license[1]), "\n",
+                                     _(license[2]), "\n", NULL);
+
+        gtk_show_about_dialog (
+                gtk_application_get_active_window (GTK_APPLICATION (application)),
+                "name", _("Evince"),
+                "version", VERSION,
+                "copyright",
+                _("© 1996–2012 The Evince authors"),
+                "license", license_trans,
+                "website", "http://www.gnome.org/projects/evince",
+                "authors", authors,
+                "documenters", documenters,
+                "translator-credits", _("translator-credits"),
+                "logo-icon-name", "evince",
+                "wrap-license", TRUE,
+                NULL);
+
+        g_free (license_trans);
+}
+
+static void
+ev_application_open_dialog_response (GtkWidget *chooser,
+				     gint       response_id,
+				     gpointer   user_data)
+{
+	if (response_id == GTK_RESPONSE_OK) {
+		GSList *uris;
+
+		ev_file_chooser_save_folder (GTK_FILE_CHOOSER (chooser),
+					     G_USER_DIRECTORY_DOCUMENTS);
+
+		uris = gtk_file_chooser_get_uris (GTK_FILE_CHOOSER (chooser));
+
+		ev_application_open_uri_list (EV_APP, uris,
+					      gtk_widget_get_screen (chooser),
+					      gtk_get_current_event_time ());
+
+		g_slist_foreach (uris, (GFunc)g_free, NULL);
+		g_slist_free (uris);
+	}
+
+	gtk_widget_destroy (chooser);
+}
+
+/**
+ * ev_application_open:
+ * @application: an #EvApplication
+ *
+ * Shows an open dialog and opens the chosen document(s) in new windows.
+ *
+ * The dialog's parent will be the most recently focussed window of
+ * @application.
+ */
+void
+ev_application_open (EvApplication *application)
+{
+	GtkWidget *chooser;
+	GtkWindow *active_window;
+
+	active_window = gtk_application_get_active_window (GTK_APPLICATION (application));
+
+	chooser = gtk_file_chooser_dialog_new (_("Open Document"),
+					       active_window,
+					       GTK_FILE_CHOOSER_ACTION_OPEN,
+					       _("Cancel"), GTK_RESPONSE_CANCEL,
+					       _("Open"), GTK_RESPONSE_OK,
+					       NULL);
+
+	ev_document_factory_add_filters (chooser, NULL);
+	gtk_file_chooser_set_select_multiple (GTK_FILE_CHOOSER (chooser), TRUE);
+	gtk_file_chooser_set_local_only (GTK_FILE_CHOOSER (chooser), FALSE);
+
+	ev_file_chooser_restore_folder (GTK_FILE_CHOOSER (chooser),
+					NULL, G_USER_DIRECTORY_DOCUMENTS);
+
+	g_signal_connect (chooser, "response",
+			  G_CALLBACK (ev_application_open_dialog_response), NULL);
+
+	gtk_widget_show (chooser);
 }
 
 GSettings *
