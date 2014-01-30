@@ -44,6 +44,7 @@
 #include "ev-stock-icons.h"
 #include "ev-utils.h"
 #include "ev-document-factory.h"
+#include "ev-recent-menu-model.h"
 
 #ifdef ENABLE_DBUS
 #include "ev-gdbus-generated.h"
@@ -57,6 +58,7 @@ struct _EvApplication {
 
 	gchar *dot_dir;
 	GSettings *settings;
+	GMenu *bookmarks_menu;
 
 #ifdef ENABLE_DBUS
         EvEvinceApplication *skeleton;
@@ -1056,6 +1058,26 @@ ev_application_dispose (GObject *object)
 }
 
 static void
+ev_application_update_bookmarks_menu (EvApplication *application)
+{
+        GtkWindow *window;
+
+        /* The bookmarks menu has two sections: the first one contains
+         * the "Add Bookmark" menu item and the second one is filled
+         * with the active window's bookmarks.
+         */
+
+        if (g_menu_model_get_n_items (G_MENU_MODEL (application->bookmarks_menu)) == 2)
+                g_menu_remove (application->bookmarks_menu, 1);
+
+        window = gtk_application_get_active_window (GTK_APPLICATION (application));
+        if (window) {
+                g_menu_append_section (application->bookmarks_menu, NULL,
+                                       ev_window_get_bookmarks_menu (EV_WINDOW (window)));
+        }
+}
+
+static void
 ev_application_startup (GApplication *gapplication)
 {
         const GActionEntry app_menu_actions[] = {
@@ -1114,11 +1136,41 @@ ev_application_startup (GApplication *gapplication)
                                          application);
 
         builder = gtk_builder_new ();
-        gtk_builder_add_from_resource (builder, "/org/gnome/evince/shell/ui/menus.ui", &error);
-        g_assert_no_error (error);
 
-        gtk_application_set_app_menu (GTK_APPLICATION (application),
-                                      G_MENU_MODEL (gtk_builder_get_object (builder, "appmenu")));
+        if (ev_application_has_traditional_menus (application))
+          {
+            GMenu *recent_section;
+            GMenuModel *recent_menu_model;
+
+            gtk_builder_add_from_resource (builder, "/org/gnome/evince/shell/ui/traditional-menus.ui", &error);
+            g_assert_no_error (error);
+
+            gtk_application_set_menubar (GTK_APPLICATION (application),
+                                         G_MENU_MODEL (gtk_builder_get_object (builder, "menubar")));
+
+            recent_menu_model = ev_recent_menu_model_new (gtk_recent_manager_get_default (),
+                                                          "app.open-file",
+                                                          g_get_application_name ());
+
+            recent_section = G_MENU (gtk_builder_get_object (builder, "recent"));
+            g_menu_append_section (recent_section, NULL, recent_menu_model);
+
+            application->bookmarks_menu = G_MENU (gtk_builder_get_object (builder, "bookmarks"));
+            g_signal_connect_swapped (application, "notify::active-window",
+                                      G_CALLBACK (ev_application_update_bookmarks_menu), application);
+            ev_application_update_bookmarks_menu (application);
+
+            g_object_unref (recent_menu_model);
+          }
+        else
+          {
+            gtk_builder_add_from_resource (builder, "/org/gnome/evince/shell/ui/menus.ui", &error);
+            g_assert_no_error (error);
+
+            gtk_application_set_app_menu (GTK_APPLICATION (application),
+                                          G_MENU_MODEL (gtk_builder_get_object (builder, "appmenu")));
+          }
+
         g_object_unref (builder);
 
         it = action_accels;
@@ -1499,4 +1551,26 @@ ev_application_get_settings (EvApplication *application)
 	g_return_val_if_fail (EV_IS_APPLICATION (application), NULL);
 
 	return application->settings;
+}
+
+gboolean
+ev_application_has_traditional_menus (EvApplication *application)
+{
+	GdkDisplay *display;
+	GdkScreen *screen;
+	GtkSettings *settings;
+	gboolean show_app_menu;
+	gboolean show_menubar;
+
+	g_return_val_if_fail (EV_IS_APPLICATION (application), FALSE);
+
+	display = gdk_display_get_default ();
+	screen = gdk_display_get_default_screen (display);
+	settings = gtk_settings_get_for_screen (screen);
+	g_object_get (G_OBJECT (settings),
+		      "gtk-shell-shows-app-menu", &show_app_menu,
+		      "gtk-shell-shows-menubar", &show_menubar,
+		      NULL);
+
+	return !show_app_menu || show_menubar;
 }

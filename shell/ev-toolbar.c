@@ -179,7 +179,6 @@ static void
 ev_toolbar_constructed (GObject *object)
 {
         EvToolbar      *ev_toolbar = EV_TOOLBAR (object);
-        GtkBuilder     *builder;
         GtkActionGroup *action_group;
         GtkWidget      *tool_item;
         GtkWidget      *hbox;
@@ -187,8 +186,6 @@ ev_toolbar_constructed (GObject *object)
         GtkWidget      *button;
         gboolean        rtl;
         GMenuModel     *menu;
-        GMenu          *recent_submenu;
-        GMenuModel     *recent_menu_model;
 
         G_OBJECT_CLASS (ev_toolbar_parent_class)->constructed (object);
 
@@ -200,7 +197,6 @@ ev_toolbar_constructed (GObject *object)
                                      GTK_STYLE_CLASS_MENUBAR);
 
         action_group = ev_window_get_main_action_group (ev_toolbar->priv->window);
-        builder = gtk_builder_new_from_resource ("/org/gnome/evince/shell/ui/menus.ui");
 
         /* Navigation */
         hbox = ev_toolbar_create_button_group (ev_toolbar);
@@ -275,50 +271,58 @@ ev_toolbar_constructed (GObject *object)
         gtk_container_add (GTK_CONTAINER (ev_toolbar), tool_item);
         gtk_widget_show (tool_item);
 
-        /* View Menu */
-        menu = G_MENU_MODEL (gtk_builder_get_object (builder, "view-menu"));
-        button = ev_toolbar_create_menu_button (ev_toolbar, "document-properties-symbolic",
-                                                menu, GTK_ALIGN_END);
-        gtk_widget_set_tooltip_text (button, _("View options"));
-        ev_toolbar->priv->view_menu_button = button;
-        tool_item = GTK_WIDGET (gtk_tool_item_new ());
-        gtk_container_add (GTK_CONTAINER (tool_item), button);
-        gtk_widget_show (button);
-        if (rtl)
-                gtk_widget_set_margin_left (tool_item, 6);
-        else
-                gtk_widget_set_margin_right (tool_item, 6);
+        if (!ev_application_has_traditional_menus (EV_APP)) {
+                GtkBuilder *builder;
+                GMenu *recent_submenu;
+                GMenuModel *recent_menu_model;
 
-        gtk_container_add (GTK_CONTAINER (ev_toolbar), tool_item);
-        gtk_widget_show (tool_item);
+                builder = gtk_builder_new_from_resource ("/org/gnome/evince/shell/ui/menus.ui");
 
-        /* Action Menu */
-        menu = G_MENU_MODEL (gtk_builder_get_object (builder, "action-menu"));
-        button = ev_toolbar_create_menu_button (ev_toolbar, "emblem-system-symbolic",
-                                                menu, GTK_ALIGN_END);
-        gtk_widget_set_tooltip_text (button, _("File options"));
-        ev_toolbar->priv->action_menu_button = button;
-        tool_item = GTK_WIDGET (gtk_tool_item_new ());
-        gtk_container_add (GTK_CONTAINER (tool_item), button);
-        gtk_widget_show (button);
+                /* View Menu */
+                menu = G_MENU_MODEL (gtk_builder_get_object (builder, "view-menu"));
+                button = ev_toolbar_create_menu_button (ev_toolbar, "document-properties-symbolic",
+                                                        menu, GTK_ALIGN_END);
+                ev_toolbar->priv->view_menu_button = button;
+                tool_item = GTK_WIDGET (gtk_tool_item_new ());
+                gtk_widget_set_margin_left (tool_item, 12);
+                gtk_container_add (GTK_CONTAINER (tool_item), button);
+                gtk_widget_show (button);
+                if (rtl)
+                        gtk_widget_set_margin_left (tool_item, 6);
+                else
+                        gtk_widget_set_margin_right (tool_item, 6);
 
-        gtk_container_add (GTK_CONTAINER (ev_toolbar), tool_item);
-        gtk_widget_show (tool_item);
+                gtk_container_add (GTK_CONTAINER (ev_toolbar), tool_item);
+                gtk_widget_show (tool_item);
 
-        recent_menu_model = ev_recent_menu_model_new (gtk_recent_manager_get_default (),
-                                                      "app.open-file",
-                                                      g_get_application_name ());
+                /* Action Menu */
+                menu = G_MENU_MODEL (gtk_builder_get_object (builder, "action-menu"));
+                button = ev_toolbar_create_menu_button (ev_toolbar, "emblem-system-symbolic",
+                                                        menu, GTK_ALIGN_END);
+                ev_toolbar->priv->action_menu_button = button;
+                tool_item = GTK_WIDGET (gtk_tool_item_new ());
+                gtk_container_add (GTK_CONTAINER (tool_item), button);
+                gtk_widget_show (button);
 
-        recent_submenu = G_MENU (gtk_builder_get_object (builder, "recent"));
-        g_menu_append_section (recent_submenu, NULL, recent_menu_model);
+                gtk_container_add (GTK_CONTAINER (ev_toolbar), tool_item);
+                gtk_widget_show (tool_item);
 
-        ev_toolbar->priv->bookmarks_section = G_MENU (gtk_builder_get_object (builder, "bookmarks"));
-        g_signal_connect_swapped (ev_window_get_bookmarks_menu (ev_toolbar->priv->window), "items-changed",
-                                  G_CALLBACK (ev_toolbar_update_bookmarks), ev_toolbar);
-        ev_toolbar_update_bookmarks (ev_toolbar);
+                /* insert dynamic recent files submenu */
+                recent_menu_model = ev_recent_menu_model_new (gtk_recent_manager_get_default (),
+                                                              "app.open-file",
+                                                              g_get_application_name ());
+                recent_submenu = G_MENU (gtk_builder_get_object (builder, "recent"));
+                g_menu_append_section (recent_submenu, NULL, recent_menu_model);
 
-        g_object_unref (recent_menu_model);
-        g_object_unref (builder);
+                /* insert bookmarks section */
+                ev_toolbar->priv->bookmarks_section = G_MENU (gtk_builder_get_object (builder, "bookmarks"));
+                g_signal_connect_swapped (ev_window_get_bookmarks_menu (ev_toolbar->priv->window), "items-changed",
+                                          G_CALLBACK (ev_toolbar_update_bookmarks), ev_toolbar);
+                ev_toolbar_update_bookmarks (ev_toolbar);
+
+                g_object_unref (recent_menu_model);
+                g_object_unref (builder);
+        }
 }
 
 static void

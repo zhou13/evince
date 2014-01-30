@@ -179,7 +179,8 @@ EXTRA_DIST = \
 	evince.gresource.xml \
 	ev-gdbus.xml \
 	ev-daemon-gdbus.xml \
-	menus.ui
+	menus.ui \
+	traditional-menus.ui
 
 ev-resources.c: evince.gresource.xml Makefile $(shell $(GLIB_COMPILE_RESOURCES) --generate-dependencies --sourcedir $(srcdir) $(srcdir)/evince.gresource.xml)
 	$(AM_V_GEN) XMLLINT=$(XMLLINT) $(GLIB_COMPILE_RESOURCES) --target $@ --sourcedir $(srcdir) --generate-source --c-name ev $<

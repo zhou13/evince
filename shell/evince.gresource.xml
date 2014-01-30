@@ -20,5 +20,6 @@
     <file alias="ui/evince.xml" compressed="true" preprocess="xml-stripblanks">evince-ui.xml</file>
     <file alias="ui/evince.css" compressed="true">evince.css</file>
     <file alias="ui/menus.ui" compressed="true" preprocess="xml-stripblanks">menus.ui</file>
+    <file alias="ui/traditional-menus.ui" compressed="true" preprocess="xml-stripblanks">traditional-menus.ui</file>
   </gresource>
 </gresources>

@@ -82,6 +82,8 @@ void              ev_application_open                (EvApplication   *applicati
 
 GSettings *       ev_application_get_settings        (EvApplication   *application);
 
+gboolean          ev_application_has_traditional_menus (EvApplication *application);
+
 G_END_DECLS
 
 #endif /* !EV_APPLICATION_H */
