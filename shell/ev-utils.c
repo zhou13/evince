@@ -478,5 +478,4 @@ ev_file_chooser_restore_folder (GtkFileChooser *file_chooser,
 	}
 
 	g_free (folder_uri);
-	g_free (parent_uri);
 }

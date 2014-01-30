@@ -75,6 +75,8 @@ evince_SOURCES=				\
 	ev-sidebar-page.h		\
 	ev-sidebar-thumbnails.c		\
 	ev-sidebar-thumbnails.h		\
+	ev-recent-menu-model.c		\
+	ev-recent-menu-model.h		\
 	main.c
 
 nodist_evince_SOURCES = \
@@ -172,12 +174,12 @@ endif
 
 EXTRA_DIST = \
 	evince.css \
-	evince-appmenu.ui \
 	evince-icon.rc \
 	evince-ui.xml \
 	evince.gresource.xml \
 	ev-gdbus.xml \
-	ev-daemon-gdbus.xml
+	ev-daemon-gdbus.xml \
+	menus.ui
 
 ev-resources.c: evince.gresource.xml Makefile $(shell $(GLIB_COMPILE_RESOURCES) --generate-dependencies --sourcedir $(srcdir) $(srcdir)/evince.gresource.xml)
 	$(AM_V_GEN) XMLLINT=$(XMLLINT) $(GLIB_COMPILE_RESOURCES) --target $@ --sourcedir $(srcdir) --generate-source --c-name ev $<
