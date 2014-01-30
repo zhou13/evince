@@ -1440,27 +1440,6 @@ lockdown_changed (GSettings   *lockdown,
 }
 #endif
 
-static GSettings *
-ev_window_ensure_settings (EvWindow *ev_window)
-{
-        EvWindowPrivate *priv = ev_window->priv;
-
-        if (priv->settings != NULL)
-                return priv->settings;
-
-        priv->settings = g_settings_new (GS_SCHEMA_NAME);
-        g_signal_connect (priv->settings,
-                          "changed::"GS_OVERRIDE_RESTRICTIONS,
-                          G_CALLBACK (override_restrictions_changed),
-                          ev_window);
-        g_signal_connect (priv->settings,
-			  "changed::"GS_PAGE_CACHE_SIZE,
-			  G_CALLBACK (page_cache_size_changed),
-			  ev_window);
-
-        return priv->settings;
-}
-
 static gboolean
 ev_window_setup_document (EvWindow *ev_window)
 {
@@ -1474,8 +1453,6 @@ ev_window_setup_document (EvWindow *ev_window)
 	ev_window_set_page_mode (ev_window, PAGE_MODE_DOCUMENT);
 	ev_window_title_set_document (ev_window->priv->title, document);
 	ev_window_title_set_uri (ev_window->priv->title, ev_window->priv->uri);
-
-        ev_window_ensure_settings (ev_window);
 
 #ifdef HAVE_DESKTOP_SCHEMAS
 	if (!ev_window->priv->lockdown_settings) {
@@ -2435,7 +2412,7 @@ ev_window_file_chooser_restore_folder (EvWindow       *window,
         const gchar *folder_uri, *dir;
         gchar *parent_uri = NULL;
 
-        g_settings_get (ev_window_ensure_settings (window),
+        g_settings_get (ev_application_get_settings (EV_APP),
                         get_settings_key_for_directory (directory),
                         "m&s", &folder_uri);
         if (folder_uri == NULL && uri != NULL) {
@@ -2477,7 +2454,7 @@ ev_window_file_chooser_save_folder (EvWindow       *window,
         }
         g_free (folder);
 
-        g_settings_set (ev_window_ensure_settings (window),
+        g_settings_set (ev_application_get_settings (EV_APP),
                         get_settings_key_for_directory (directory),
                         "ms", uri);
         g_free (uri);
@@ -5686,7 +5663,7 @@ ev_window_caret_navigation_message_area_response_cb (EvMessageArea *area,
 
 	/* Turn the confirmation dialog off if the user has requested not to show it again */
 	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->priv->ask_caret_navigation_check))) {
-		g_settings_set_boolean (ev_window_ensure_settings (window), "show-caret-navigation-message", FALSE);
+		g_settings_set_boolean (ev_application_get_settings (EV_APP), "show-caret-navigation-message", FALSE);
 		g_settings_apply (window->priv->settings);
 	}
 
@@ -5707,7 +5684,7 @@ ev_window_cmd_view_toggle_caret_navigation (GtkAction *action,
 	/* Don't ask for user confirmation to turn the caret navigation off when it is active,
 	 * or to turn it on when the confirmation dialog is not to be shown per settings */
 	enabled = ev_view_is_caret_navigation_enabled (EV_VIEW (window->priv->view));
-	if (enabled || !g_settings_get_boolean (ev_window_ensure_settings (window), "show-caret-navigation-message")) {
+	if (enabled || !g_settings_get_boolean (ev_application_get_settings (EV_APP), "show-caret-navigation-message")) {
 		ev_window_set_caret_navigation_enabled (window, !enabled);
 		return;
 	}
@@ -7578,8 +7555,17 @@ ev_window_init (EvWindow *ev_window)
 			ev_window->priv->view_box);
 	gtk_widget_show (ev_window->priv->view_box);
 
+	g_signal_connect (ev_application_get_settings (EV_APP),
+			  "changed::"GS_OVERRIDE_RESTRICTIONS,
+			  G_CALLBACK (override_restrictions_changed),
+			  ev_window);
+	g_signal_connect (ev_application_get_settings (EV_APP),
+			  "changed::"GS_PAGE_CACHE_SIZE,
+			  G_CALLBACK (page_cache_size_changed),
+			  ev_window);
+
 	ev_window->priv->view = ev_view_new ();
-	page_cache_mb = g_settings_get_uint (ev_window_ensure_settings (ev_window),
+	page_cache_mb = g_settings_get_uint (ev_application_get_settings (EV_APP),
 					     GS_PAGE_CACHE_SIZE);
 	ev_view_set_page_cache_size (EV_VIEW (ev_window->priv->view),
 				     page_cache_mb * 1024 * 1024);

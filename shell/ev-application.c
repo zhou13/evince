@@ -54,6 +54,7 @@ struct _EvApplication {
 	gchar *uri;
 
 	gchar *dot_dir;
+	GSettings *settings;
 
 #ifdef ENABLE_DBUS
         EvEvinceApplication *skeleton;
@@ -1011,6 +1012,16 @@ app_help_cb (GSimpleAction *action,
 }
 
 static void
+ev_application_dispose (GObject *object)
+{
+	EvApplication *app = EV_APPLICATION (object);
+
+	g_clear_object (&app->settings);
+
+	G_OBJECT_CLASS (ev_application_parent_class)->dispose (object);
+}
+
+static void
 ev_application_startup (GApplication *gapplication)
 {
         const GActionEntry app_menu_actions[] = {
@@ -1138,7 +1149,10 @@ ev_application_dbus_unregister (GApplication    *gapplication,
 static void
 ev_application_class_init (EvApplicationClass *ev_application_class)
 {
+        GObjectClass *object_class = G_OBJECT_CLASS (ev_application_class);
         GApplicationClass *g_application_class = G_APPLICATION_CLASS (ev_application_class);
+
+        object_class->dispose = ev_application_dispose;
 
         g_application_class->startup = ev_application_startup;
         g_application_class->activate = ev_application_activate;
@@ -1157,6 +1171,8 @@ ev_application_init (EvApplication *ev_application)
                                                     "evince", NULL);
         if (!g_file_test (ev_application->dot_dir, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))
                 ev_application_migrate_config_dir (ev_application);
+
+	ev_application->settings = g_settings_new ("org.gnome.Evince");
 
 	ev_application_init_session (ev_application);
 
@@ -1256,4 +1272,12 @@ ev_application_show_help (EvApplication *application,
 
         gtk_show_uri (screen, uri, gtk_get_current_event_time (), NULL);
         g_free (uri);
+}
+
+GSettings *
+ev_application_get_settings (EvApplication *application)
+{
+	g_return_val_if_fail (EV_IS_APPLICATION (application), NULL);
+
+	return application->settings;
 }

@@ -76,6 +76,8 @@ void              ev_application_show_help           (EvApplication   *applicati
                                                       GdkScreen       *screen,
                                                       const char      *topic);
 
+GSettings *       ev_application_get_settings        (EvApplication   *application);
+
 G_END_DECLS
 
 #endif /* !EV_APPLICATION_H */
