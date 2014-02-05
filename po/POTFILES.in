@@ -57,3 +57,6 @@ shell/ev-window.c
 shell/ev-window-title.c
 shell/main.c
 [type: gettext/glade]shell/evince-appmenu.ui
+[type: gettext/glade]shell/menus.ui
+[type: gettext/glade]shell/traditional-menus.ui
+shell/ev-toolbar.c
