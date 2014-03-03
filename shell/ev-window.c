@@ -589,6 +589,8 @@ update_chrome_visibility (EvWindow *window)
 	set_widget_visibility (priv->toolbar, toolbar);
 	set_widget_visibility (priv->find_bar, findbar);
 	set_widget_visibility (priv->sidebar, sidebar);
+
+	gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (window), !presentation);
 }
 
 static void
