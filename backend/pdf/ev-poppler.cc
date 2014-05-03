@@ -3090,6 +3090,39 @@ pdf_document_annotations_document_is_modified (EvDocumentAnnotations *document_a
 	return PDF_DOCUMENT (document_annotations)->annots_modified;
 }
 
+
+static void
+_print_mapping_list (PdfDocument *pdf_document,
+		     EvPage *page)
+{
+	EvMappingList *mapping_list;
+	EvMapping     *annot_mapping;
+	GList         *list;
+	gchar         *name;
+
+	mapping_list = (EvMappingList *)g_hash_table_lookup (pdf_document->annots,
+							     GINT_TO_POINTER (page->index));
+
+	g_print ("Page: %d\n", page->index);
+
+	if (mapping_list) {
+		g_print ("  len: %d\n", ev_mapping_list_length (mapping_list));
+
+		list = ev_mapping_list_get_list (mapping_list);
+		for (GList *l = list; l; l = l->next) {
+			EvMapping *map = (EvMapping *) l->data;
+			if (EV_IS_ANNOTATION (map->data)) {
+				name = (char *)ev_annotation_get_name (EV_ANNOTATION (map->data));
+				g_print ("  %s\n", name);
+			} else {
+				g_print ("  no annotation\n");
+			}
+		}
+	} else {
+		g_print ("page %d with no annotations\n", page->index);
+	}
+}
+
 static void
 pdf_document_annotations_remove_annotation (EvDocumentAnnotations *document_annotations,
 					    EvAnnotation          *annot)
@@ -3114,7 +3147,9 @@ pdf_document_annotations_remove_annotation (EvDocumentAnnotations *document_anno
 	if (mapping_list) {
 		annot_mapping = ev_mapping_list_find (mapping_list,
 						      annot);
+		_print_mapping_list (pdf_document, page);
 		ev_mapping_list_remove (mapping_list, annot_mapping);
+		_print_mapping_list (pdf_document, page);
 	}
 
 	poppler_page_remove_annot (poppler_page, poppler_annot);
@@ -3202,6 +3237,7 @@ pdf_document_annotations_add_annotation (EvDocumentAnnotations *document_annotat
 		mapping_list = (EvMappingList *)g_hash_table_lookup (pdf_document->annots,
 								     GINT_TO_POINTER (page->index));
 	} else {
+		g_print ("new pdf_documents->annots\n");
 		pdf_document->annots = g_hash_table_new_full (g_direct_hash,
 							      g_direct_equal,
 							      (GDestroyNotify)NULL,
@@ -3213,11 +3249,14 @@ pdf_document_annotations_add_annotation (EvDocumentAnnotations *document_annotat
 		list = ev_mapping_list_get_list (mapping_list);
 		name = g_strdup_printf ("annot-%d-%d", page->index, g_list_length (list) + 1);
 		ev_annotation_set_name (annot, name);
+		g_print (" new: %s\n", name);
 		g_free (name);
 		list = g_list_append (list, annot_mapping);
 	} else {
+		g_print ("new mapping list\n");
 		name = g_strdup_printf ("annot-%d-0", page->index);
 		ev_annotation_set_name (annot, name);
+		g_print (" new: %s\n", name);
 		g_free (name);
 		list = g_list_append (list, annot_mapping);
 		mapping_list = ev_mapping_list_new (page->index, list, (GDestroyNotify)g_object_unref);
