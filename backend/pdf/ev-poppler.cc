@@ -406,8 +406,6 @@ pdf_page_render (PopplerPage     *page,
 
 	subpixel_rendering = poppler_page_support_subpixel_rendering (page);
 	printf("subpixel_rendering: %d\n", subpixel_rendering);
-	printf("subpixel_rendering: %d\n", subpixel_rendering);
-	printf("subpixel_rendering: %d\n", subpixel_rendering);
 	if (subpixel_rendering) {
 		cairo_set_source_rgb (cr, 1., 1., 1.);
 		cairo_paint (cr);
