@@ -402,14 +402,11 @@ pdf_page_render (PopplerPage     *page,
 
 	fo = cairo_font_options_create ();
 	cairo_get_font_options (cr, fo);
-	cairo_font_options_set_hint_style (fo, CAIRO_HINT_STYLE_SLIGHT);
-
 	subpixel_rendering = poppler_page_support_subpixel_rendering (page);
-	printf("subpixel_rendering: %d\n", subpixel_rendering);
+	// printf("subpixel_rendering: %d\n", subpixel_rendering);
 	if (subpixel_rendering) {
 		cairo_set_source_rgb (cr, 1., 1., 1.);
 		cairo_paint (cr);
-
 		cairo_font_options_set_antialias (fo, CAIRO_ANTIALIAS_SUBPIXEL);
 		cairo_font_options_set_subpixel_order (fo, CAIRO_SUBPIXEL_ORDER_RGB);
 	}
